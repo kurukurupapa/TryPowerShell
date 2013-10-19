@@ -1,0 +1,4 @@
+# サンプルデータ
+Host,User,Password,Path,DestDir
+ftp.jaist.ac.jp,anonymous,password,/pub/sourceforge.jp/ffftp/58201/ffftp-1.98g.exe,
+,,,/pub/sourceforge.jp/ffftp/58201/ffftp-1.98g.zip,zip
