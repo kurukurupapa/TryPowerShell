@@ -24,6 +24,8 @@ $excel.Workbooks.Add() | %{
     
     # 新規ワークシート
     $_.Worksheets.Item(1) |  %{
+        # セルに値を書き込む
+        # セルのインデックスは1始まり
         $_.Cells.Item(1, 1) = "A1"
         $_.Cells.Item(1, 2) = "B1"
         $_.Cells.Item(2, 1) = "A2"
