@@ -16,7 +16,9 @@ $DebugPreference = "Continue"
 # 使用方法を出力する。
 # return - なし
 function U-Write-Usage() {
-    Write-Output "使い方：$psName"
+    Write-Output @"
+使い方：$psName
+"@
 }
 
 # 主処理を実行する。
