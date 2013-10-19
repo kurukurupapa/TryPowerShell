@@ -12,6 +12,7 @@ $psName = Split-Path $MyInvocation.InvocationName -Leaf
 $psBaseName = $psName -replace "\.ps1$", ""
 $sep = "#" * 70
 
+# ÉeÉXÉgëŒè€functionÇÃì«Ç›çûÇ›
 . $baseDir\EchoFunc.ps1
 
 ######################################################################
