@@ -15,6 +15,9 @@ $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 # Excel2000-2003形式
 $xlExcel8 = 56
 
+# 出力Excelファイル
+$outExcelFile = "${baseDir}\TestResult\Excel002_Result.xls"
+
 # Excelを起動する
 $excel = New-Object -ComObject Excel.Application
 #$excel.Visible = $true
@@ -33,7 +36,7 @@ $excel.Workbooks.Add() | %{
     }
     
     # ブックを保存する
-    $_.SaveAs("${baseDir}\TestData\Excel002_Result.xls", $xlExcel8)
+    $_.SaveAs($outExcelFile, $xlExcel8)
 }
 
 # Excelを終了する
