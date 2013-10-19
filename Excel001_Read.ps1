@@ -12,7 +12,7 @@ $psName = Split-Path $MyInvocation.InvocationName -Leaf
 $psBaseName = $psName -replace "\.ps1$", ""
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 
-# Excelを起動して画面表示する
+# Excelを起動する
 $excel = New-Object -ComObject Excel.Application
 #$excel.Visible = $true
 
@@ -43,4 +43,4 @@ $excel.Workbooks.Open("${baseDir}\TestData\Excel001_Data.xls") | %{
 
 # Excelを終了する
 $excel.Quit()
-[System.Runtime.InteropServices.Marshal]::FinalReleaseComObject($excel)
+[System.Runtime.InteropServices.Marshal]::FinalReleaseComObject($excel) | Out-Null
