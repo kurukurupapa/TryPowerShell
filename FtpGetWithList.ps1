@@ -19,7 +19,7 @@ $DebugPreference = "Continue"
 function U-Write-Usage() {
     Write-Output @"
 使い方：$psName リストファイル [保存先ディレクトリ]
-リストファイル - 次のデータを記述したCSVファイル
+リストファイル - 次のデータを記述したファイル（CSV,TSV,Excel(xls)）
   1行目：ヘッダー
   2行目以降：データ
     1列目：ホスト。上の行と同じ場合は未設定。
@@ -41,12 +41,52 @@ function U-Write-Usage() {
 function U-Run-Main() {
     # FTPコマンドを一時ファイルに書き込む
     $tmpPath = "${destBaseDir}\FtpGetWithList.tmp"
-    Get-Content $listPath | ConvertFrom-Csv | U-Out-Command | U-Out-SjisFile $tmpPath
+    $extension = $(Get-ChildItem $listPath).get_extension()
+    $extension = $extension.ToLower()
+    if ($extension -eq ".csv") {
+        Get-Content $listPath | ConvertFrom-Csv | U-Out-Command | U-Out-SjisFile $tmpPath
+    } elseif($extension -eq ".tsv") {
+        Get-Content $listPath | ConvertFrom-Csv -Delimiter "`t" | U-Out-Command | U-Out-SjisFile $tmpPath
+    } elseif($extension -eq ".xls") {
+        U-Import-Excel $listPath | ConvertFrom-Csv | U-Out-Command | U-Out-SjisFile $tmpPath
+    } else {
+        Write-Error "サポートしていないファイル形式です。$listPath"
+    }
     
     # FTP実行
     Write-Verbose "FTP Start"
     Invoke-Expression "ftp -s:${tmpPath}"
     Write-Verbose "FTP End"
+}
+
+function U-Import-Excel($excelFile) {
+    # Excelを起動する
+    $excel = New-Object -ComObject Excel.Application
+
+    # ブックを開く
+    $excel.Workbooks.Open($excelFile) | %{
+        # シートを読み込み
+        $_.Worksheets | %{
+            # 行を読み込む
+            $_.UsedRange.Rows | %{
+                $line = ""
+                
+                # 列を読み込む
+                $_.Columns | %{
+                    if ($_.Column -gt 1) {
+                        $line += ","
+                    }
+                    $line += $_.Text
+                }
+                
+                Write-Output $line
+            }
+        }
+    }
+
+    # Excelを終了する
+    $excel.Quit()
+    [System.Runtime.InteropServices.Marshal]::FinalReleaseComObject($excel) | Out-Null
 }
 
 function U-Out-Command() {

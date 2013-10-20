@@ -50,6 +50,17 @@ Invoke-Expression "${baseDir}\FtpGetWithList.ps1 $listPath $destDir"
 
 Write-Output $sep
 
+$listPath = "${dataDir}\FtpGetWithList.tsv"
+$destDir = "${resultDir}\FtpGetWithList_004"
+Invoke-Expression "${baseDir}\FtpGetWithList.ps1 $listPath $destDir"
+
+Write-Output $sep
+
+$listPath = "${dataDir}\FtpGetWithList.xls"
+$destDir = "${resultDir}\FtpGetWithList_005"
+Invoke-Expression "${baseDir}\FtpGetWithList.ps1 $listPath $destDir"
+
+Write-Output $sep
 ###
 ### å„èàóù
 ###
