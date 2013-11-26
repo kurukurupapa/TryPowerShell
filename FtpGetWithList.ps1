@@ -90,6 +90,11 @@ function U-Import-Excel($excelFile) {
 }
 
 function U-Out-Command() {
+    begin {
+        $oldHostName = $null
+        $oldUser = $null
+        $oldPassword = $null
+    }
     process {
         $hostName = $_.Host
         $user = $_.User
@@ -99,10 +104,12 @@ function U-Out-Command() {
         
         # FTP接続コマンドを出力する
         if ($hostName -ne $null -and $hostName -ne "") {
-            Write-Output "open $hostName"
-            Write-Output "$user"
-            Write-Output "$password"
-            Write-Output "bin"
+            if ($hostName -ne $oldHostName -or $user -ne $oldUser -or $password -ne $oldPassword) {
+                Write-Output "open $hostName"
+                Write-Output "$user"
+                Write-Output "$password"
+                Write-Output "bin"
+            }
         }
         
         # ローカル側のディレクトリを作成する
@@ -118,6 +125,10 @@ function U-Out-Command() {
         # GETコマンドを出力する
         Write-Output "lcd ${outDir}"
         Write-Output "get $path"
+        
+        $oldHostName = $hostName
+        $oldUser = $user
+        $oldPassword = $password
     }
     end {
         # FTP切断コマンドを出力する

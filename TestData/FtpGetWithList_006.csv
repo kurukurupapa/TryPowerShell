@@ -1,0 +1,15 @@
+# サンプルデータ
+# DestDir - 末尾は"\"不要
+Host,User,Password,Path,DestDir
+
+# デフォルトデータパターン
+ftp.jaist.ac.jp,anonymous,password,/pub/sourceforge.jp/ffftp/58201/ffftp-1.98g.exe,
+,,,/pub/sourceforge.jp/ffftp/58201/ffftp-1.98g.zip,zip
+
+# 出力先ディレクトリが存在しないパターン
+ftp.jaist.ac.jp,anonymous,password,/pub/sourceforge.jp/ffftp/58201/ffftp-1.98g.zip,zip2
+ftp.jaist.ac.jp,anonymous,password,/pub/sourceforge.jp/ffftp/58201/ffftp-1.98g.zip,zip2a\a
+
+# 1つ上の行と接続先が同じ場合、openコマンドなしで、続けて取得することの確認データ。
+ftp.jaist.ac.jp,anonymous2,password,/pub/sourceforge.jp/ffftp/58201/ffftp-1.98g.exe,zip3
+ftp.jaist.ac.jp,anonymous2,password,/pub/sourceforge.jp/ffftp/58201/ffftp-1.98g.zip,zip3

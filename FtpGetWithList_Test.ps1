@@ -31,11 +31,14 @@ Write-Verbose "$psName Start"
 
 Write-Output $sep
 
+# 引数なし
 Invoke-Expression "${baseDir}\FtpGetWithList.ps1"
 
 Write-Output $sep
 
-$listPath = "${dataDir}\FtpGetWithList.txt"
+# 入力リストファイル引数のみあり（保存先ディレクトリ引数なし）
+# 入力リストファイルがCSV形式
+$listPath = "${dataDir}\FtpGetWithList.csv"
 $destDir = "${resultDir}\FtpGetWithList_002"
 New-Item $destDir -ItemType Directory -Force | Out-Null
 Push-Location $destDir
@@ -44,20 +47,31 @@ Pop-Location
 
 Write-Output $sep
 
-$listPath = "${dataDir}\FtpGetWithList.txt"
+# 入力リストファイル引数あり
+# 保存先ディレクトリ引数あり
+$listPath = "${dataDir}\FtpGetWithList.csv"
 $destDir = "${resultDir}\FtpGetWithList_003"
 Invoke-Expression "${baseDir}\FtpGetWithList.ps1 $listPath $destDir"
 
 Write-Output $sep
 
+# 入力リストファイルがTSV形式
 $listPath = "${dataDir}\FtpGetWithList.tsv"
 $destDir = "${resultDir}\FtpGetWithList_004"
 Invoke-Expression "${baseDir}\FtpGetWithList.ps1 $listPath $destDir"
 
 Write-Output $sep
 
+# 入力リストファイルがExcel形式
 $listPath = "${dataDir}\FtpGetWithList.xls"
 $destDir = "${resultDir}\FtpGetWithList_005"
+Invoke-Expression "${baseDir}\FtpGetWithList.ps1 $listPath $destDir"
+
+Write-Output $sep
+
+# 入力リストファイルの各種データパターン
+$listPath = "${dataDir}\FtpGetWithList_006.csv"
+$destDir = "${resultDir}\FtpGetWithList_006"
 Invoke-Expression "${baseDir}\FtpGetWithList.ps1 $listPath $destDir"
 
 Write-Output $sep
