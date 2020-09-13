@@ -18,7 +18,7 @@ exit /b 0
 set w=%1
 set h=%2
 set name=%3
-powershell -ExecutionPolicy RemoteSigned -File "%batdir%CreateSendto.ps1" ResizeImage_%w%x%h% "%batdir%ResizeImage.bat" " -Width %w% -Height %h% -Path" 100
+powershell -ExecutionPolicy RemoteSigned -File "%batdir%CreateSendto.ps1" ResizeImage_%w%x%h% "%batdir%ResizeImage.bat" " -Width %w% -Height %h% -Path"
 if errorlevel 1 (
   set errflag=1
 )
