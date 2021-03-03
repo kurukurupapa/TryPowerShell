@@ -27,7 +27,6 @@ $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Drawing
 
 # ƒwƒ‹ƒv
-Write-Output "ˆø”F${offsetleft}, ${offsettop}, ${offsetright}, ${offsetbottom}, ${width}, ${height}"
 if (!$path -or
   (($offsetleft -ge 0) -and ($offsetright -ge 0) -and ($width -ge 1)) -or
   (($offsetleft -lt 0) -and ($offsetright -lt 0) -and ($width -lt 1)) -or
