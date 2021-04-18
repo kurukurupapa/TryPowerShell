@@ -148,8 +148,8 @@ $env:PATH = "$env:PATH;C:\Users\xxx\bin"
 ```
 
 コマンドを複数行に分けて書く。
-行末にバッククォート「`」を書くことで、コマンドを次の行にも続けられる。
-ただし、次の例だと、行末にパイプがあり、式が終了していないと見なされるので、「`」を書かなくてもよい。
+行末にバッククォート「\`」を書くことで、コマンドを次の行にも続けられる。
+ただし、次の例だと、行末にパイプがあり、式が終了していないと見なされるので、「\`」を書かなくてもよい。
 
 ```powershell
 Get-Process | `
@@ -186,8 +186,8 @@ class Class1 {
     return ("item1=" + $this.item1)
   }
 }
-$obj1 = [Class1]::new("value1")
-$obj2 = New-Object Class1 "value2"
+$obj1 = New-Object Class1 "value1"
+$obj2 = [Class1]::new("value2")
 $obj1.ToString()
 ```
 

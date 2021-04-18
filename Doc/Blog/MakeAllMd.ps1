@@ -33,8 +33,12 @@ $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 # 処理開始
 Write-Verbose "$psName Start"
 
+# title: 普段使いのPowerShellメモ
+# tags: PowerShell Windows
+# author: kurukurupapa@github
+# slide: false
 $outPath = Join-Path $psDir "All.md"
-Get-ChildItem (Join-Path $psDir "*.md") -Exclude "All.md" | `
+Get-ChildItem (Join-Path $psDir "*.md") -Exclude "All*.md" | `
   %{ Get-Content $_.FullName -Encoding UTF8 } | `
   %{ [Text.Encoding]::UTF8.GetBytes($_ + "`r`n") } | `
   Set-Content -Encoding Byte $outPath
