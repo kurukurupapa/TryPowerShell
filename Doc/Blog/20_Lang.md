@@ -9,37 +9,37 @@
 $number = 123
 $str = "abc"
 # 文字列組み立て
-"${number}`t${str}"                 #-> "123     abc"
-'${number}`t${str}'                 #-> "${number}`t${str}"
-"$($number * 2) $($str * 2)"        #-> "246 abcabc"
-"{0:D10}" -f $number                #-> "0000000123"
-$number.ToString().PadLeft(10, "0") #-> "0000000123"
-$str.PadRight(10, "*")              #-> "abc*******"
+"${number}`t${str}"                 #=> "123     abc"
+'${number}`t${str}'                 #=> "${number}`t${str}"
+"$($number * 2) $($str * 2)"        #=> "246 abcabc"
+"{0:D10}" -f $number                #=> "0000000123"
+$number.ToString().PadLeft(10, "0") #=> "0000000123"
+$str.PadRight(10, "*")              #=> "abc*******"
 # 編集
-" abc ".Trim()                      #-> "abc"
-"abcde".TrimStart("a")              #-> "bcde"
-"abcde".TrimEnd("e")                #-> "abcd"
-"abcde".Replace("bc", "BC")         #-> "aBCde"
-"abcde" -replace "bc", "BC"         #-> "aBCde"
-"abcde" -replace "a(.+)e","A<`$1>E" #-> "A<bcd>E"
-"abcde".Substring(2, 3)             #-> "cde"
-"a, b, c" -split ", *"              #-> ("a","b","c")
-("a","b","c") -join ","             #-> "a,b,c"
+" abc ".Trim()                      #=> "abc"
+"abcde".TrimStart("a")              #=> "bcde"
+"abcde".TrimEnd("e")                #=> "abcd"
+"abcde".Replace("bc", "BC")         #=> "aBCde"
+"abcde" -replace "bc", "BC"         #=> "aBCde"
+"abcde" -replace "a(.+)e","A<`$1>E" #=> "A<bcd>E"
+"abcde".Substring(2, 3)             #=> "cde"
+"a, b, c" -split ", *"              #=> ("a","b","c")
+("a","b","c") -join ","             #=> "a,b,c"
 # 検索、比較
-$str.IndexOf("bc")                  #-> 1
-$str.LastIndexOf("bc")              #-> 1
-$str.Contains("bc")                 #-> True
-$str.StartsWith("ab")               #-> True
-$str.EndsWith("bc")                 #-> True
-$str -like "ab*"                    #-> True
-$str -notlike "ab*"                 #-> False
-$str -match "[a-z]+"                #-> True
-$str -notmatch "[a-z]+"             #-> False
-if ("abcde" -match "b(c)d") { $Matches } #-> @{0="bcd";1="c"}
-2 -in 1,2,3                         #-> True
-2 -notin 1,2,3                      #-> False
-1,2,3 -contains 2                   #-> True
-1,2,3 -notcontains 2                #-> False
+$str.IndexOf("bc")                  #=> 1
+$str.LastIndexOf("bc")              #=> 1
+$str.Contains("bc")                 #=> True
+$str.StartsWith("ab")               #=> True
+$str.EndsWith("bc")                 #=> True
+$str -like "ab*"                    #=> True
+$str -notlike "ab*"                 #=> False
+$str -match "[a-z]+"                #=> True
+$str -notmatch "[a-z]+"             #=> False
+if ("abcde" -match "b(c)d") { $Matches } #=> @{0="bcd";1="c"}
+2 -in 1,2,3                         #=> True
+2 -notin 1,2,3                      #=> False
+1,2,3 -contains 2                   #=> True
+1,2,3 -notcontains 2                #=> False
 ```
 
 日時
@@ -58,17 +58,17 @@ $timespan = $dtobj - [Datetime]"2021/01/01 01:01:01"
 ```powershell
 Test-Path "D:\tmp\subdir" -PathType Container
 Test-Path "D:\tmp\subdir\dummy.txt" -PathType Leaf
-Split-Path "D:\tmp\subdir\dummy.txt" -Leaf         #-> "dummy.txt"
-Split-Path "D:\tmp\subdir\dummy.txt" -Parent       #-> "D:\tmp\subdir"
+Split-Path "D:\tmp\subdir\dummy.txt" -Leaf         #=> "dummy.txt"
+Split-Path "D:\tmp\subdir\dummy.txt" -Parent       #=> "D:\tmp\subdir"
 Join-Path "D:\tmp\subdir" "dummy.txt"
 Get-Location
 Set-Location "D:\tmp"
 # 相対パス・絶対パス変換（パスが存在すること）
-Resolve-Path ".\subdir\dummy.txt"                  #-> 絶対パス（PathInfo）
-Resolve-Path "D:\tmp\subdir\dummy.txt" -Relative   #-> 相対パス（string）
+Resolve-Path ".\subdir\dummy.txt"                  #=> 絶対パス（PathInfo）
+Resolve-Path "D:\tmp\subdir\dummy.txt" -Relative   #=> 相対パス（string）
 # 相対パス・絶対パス変換（パスが存在しなくてもよい）
 [System.IO.Directory]::GetCurrentDirectory()
-[System.IO.Path]::GetFullPath(".\subdir\dummy.txt") #-> 絶対パス（string）
+[System.IO.Path]::GetFullPath(".\subdir\dummy.txt") #=> 絶対パス（string）
 # PowerShellスクリプト内で自スクリプトのパス情報を取得
 $psDir = Convert-Path $(Split-Path $MyInvocation.InvocationName -Parent)
 $psName = Split-Path $MyInvocation.InvocationName -Leaf
@@ -164,14 +164,14 @@ Get-Process | `
 function Func1($arg1, $arg2=123) {
   return "$arg1,$arg2"
 }
-Func1 "abc" #-> "abc,123"
+Func1 "abc" #=> "abc,123"
 
 function Func2([Parameter(ValueFromPipeline=$true)]$arg1) {
   process {
     return $arg1.ToUpper()
   }
 }
-"abc" | Func2 #-> "ABC"
+"abc" | Func2 #=> "ABC"
 ```
 
 クラス
@@ -208,7 +208,7 @@ Get-Process | %{ $_.ProcessName } | sort | Get-Unique
 Get-Process | ?{ $_.CPU -ge 100 }
 Get-Process | sort CPU -Descending
 Get-Process | select ProcessName
-"b","a","b" | select -Unique -First 3 #-> "b","a"
+"b","a","b" | select -Unique -First 3 #=> "b","a"
 ```
 
 外部コマンド実行
@@ -224,5 +224,5 @@ $lastexitcode
 文字列をコードとして実行
 
 ```powershell
-Invoke-Expression "1+1" #-> 2
+Invoke-Expression "1+1" #=> 2
 ```
