@@ -1,3 +1,6 @@
 *.bak
 *.log
+
 bak/
+
+Doc/Blog/All.md

@@ -9,7 +9,6 @@ PowerShellスクリプトのテンプレートです。（拡張版）
 
 .EXAMPLE
 Template2b.ps1 "D:\tmp\indir" "D:\tmp\outdir"
-Template2b.ps1 "D:\tmp\indir" "D:\tmp\outdir" -Verbose
 #>
 
 [CmdletBinding()]
@@ -28,10 +27,11 @@ $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $logPath = Join-Path "." "${psBaseName}.log"
 function Log($level, $msg) {
   $timestamp = Get-Date -Format "yyyy/MM/dd HH:mm:ss"
-  $fullMsg = "${timestamp} [${level}] ${msg}"
-  Write-Output $fullMsg >> $logPath
-  if ($level -match "INFO|ERROR") {
-    Write-Host $fullMsg
+  "${timestamp} [${level}] ${msg}" | %{
+    Add-Content $logPath -Value $_
+    if ($level -match "INFO|ERROR") {
+      Write-Host $_
+    }
   }
 }
 function DebugLog($msg) {
