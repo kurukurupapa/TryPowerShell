@@ -9,6 +9,7 @@ PowerShellスクリプトのテンプレートです。（拡張版）
 
 .EXAMPLE
 Template2b.ps1 "D:\tmp\indir" "D:\tmp\outdir"
+Template2b.ps1 "D:\tmp\indir" "D:\tmp\outdir" -Verbose
 #>
 
 [CmdletBinding()]
@@ -18,8 +19,6 @@ Param(
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-#$VerbosePreference = 'Continue'
-#$VerbosePreference = 'SilentlyContinue'
 $psDir = Convert-Path $(Split-Path $MyInvocation.InvocationName -Parent)
 $psName = Split-Path $MyInvocation.InvocationName -Leaf
 $psBaseName = $psName -replace ("\.ps1$", "")
