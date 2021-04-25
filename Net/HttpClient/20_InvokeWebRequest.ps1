@@ -24,7 +24,9 @@ HTTPアクセスするためのクライアント機能は、Invoke-WebRequestコマンドレット、Invok
   - 基本、WebClientクラス
   - リクエスト/レスポンスを細かく制御したいなら、HttpWebRequest/HttpWebResponseクラス
 
-## Invoke-WebRequestコマンドレット GETメソッド
+## Invoke-WebRequestコマンドレット
+
+### GETメソッド
 
 例：Google検索（GETメソッド、KeyValue風リクエスト、HTMLレスポンス）
 
@@ -91,7 +93,7 @@ $xmlobj = [Xml]$res.Content
 $xmlobj.OuterXml
 <#
 
-## Invoke-WebRequestコマンドレット POSTメソッド
+### POSTメソッド
 
 例：Yahoo! JAPAN 日本語形態素解析WebAPI（POSTメソッド、KeyValue風リクエスト、XMLレスポンス）
 

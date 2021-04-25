@@ -259,6 +259,8 @@ $client.DownloadFile($url, 'D:\tmp\out.txt')
 Invoke-WebRequest -Uri $url -OutFile 'out.txt'
 ```
 
+もっと細かい話は、[PowerShellで HTTPアクセスする いくつかの方法 - Qiita](https://qiita.com/kurukurupapa@github/items/c77b7be7f3c05453e75e) に記述しました。
+
 ## アプリケーション操作
 
 ### IE操作

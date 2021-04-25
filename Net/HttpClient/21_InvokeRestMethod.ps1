@@ -1,6 +1,8 @@
 <#
 
-## Invoke-RestMethodコマンドレット GETメソッド
+## Invoke-RestMethodコマンドレット
+
+### GETメソッド
 
 例：Yahoo! JAPAN 日本語形態素解析WebAPI（GET）
 
@@ -33,7 +35,7 @@ try {
 }
 <#
 
-## Invoke-RestMethodコマンドレット POSTメソッド
+### POSTメソッド
 
 例：Yahoo! JAPAN 日本語形態素解析WebAPI（POST）
 

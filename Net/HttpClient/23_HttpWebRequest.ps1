@@ -1,6 +1,8 @@
 <#
 
-## HttpWebRequest/HttpWebResponse GETメソッド
+## HttpWebRequest/HttpWebResponseクラス
+
+### GETメソッド
 
 例：Google検索（GETメソッド）
 
@@ -56,7 +58,7 @@ echo $reader.ReadToEnd()
 $res.Close()
 <#
 
-## HttpWebRequest/HttpWebResponse POSTメソッド
+### POSTメソッド
 
 例：Yahoo! JAPAN 日本語形態素解析WebAPI（POSTメソッド、KeyValue風リクエスト）
 

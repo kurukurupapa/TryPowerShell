@@ -1,6 +1,8 @@
 <#
 
-## WebClientクラス GETメソッド
+## WebClientクラス
+
+### GETメソッド
 
 例：Google検索（GETメソッド）
 
@@ -54,7 +56,7 @@ $wc.Dispose()
 Write-Output $resstr
 <#
 
-## WebClientクラス POSTメソッド
+### POSTメソッド
 
 例：Yahoo! JAPAN 日本語形態素解析WebAPI（POST）
 
