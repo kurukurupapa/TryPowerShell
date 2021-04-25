@@ -2,6 +2,10 @@
 
 # コンテンツのデータ形式
 
+HTTPレスポンスで受信するコンテンツのデータ形式について、メモしておきます。
+JSONはリクエスト時にも使用する場合あり。
+もしかすると、XMLでリクエストすることもあり得るかも。
+
 ## HTML
 
 ConvertTo-Htmlコマンドレット
@@ -9,8 +13,18 @@ ConvertTo-Htmlコマンドレット
 - ConvertFrom-Htmlは存在しない。
 - [ConvertTo-Html (Microsoft.PowerShell.Utility) - PowerShell | Microsoft Docs](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.utility/convertto-html)
 
+COMを使用して、HTMLをパースする方法です。
+
 #>
-# 省略
+$sample = "<html><head><title>サンプル</title></head>" +
+  "<body><span id='text1' name='text1'>サンプルページです。</span></body></html>"
+$html = New-Object -com "HTMLFILE"
+$html.IHTMLDocument2_write($sample)
+$html.Close()
+echo $html.title
+echo $html.getElementById("text1").innerText
+$html.getElementsByName("text1") | %{ echo $_.innerText }
+$html.getElementsByTagName("span") | %{ echo $_.innerText }
 <#
 
 ## XML
@@ -53,10 +67,50 @@ ConvertFrom-Jsonコマンドレット、ConvertTo-Jsonコマンドレットを利用しました。
 
 #>
 # オブジェクトをJSON文字列に変換。Depthの最大値は100
-$jsonstr = ConvertTo-Json @{Key1="value1";Key2='日本語 記号''"{}<>'} -Depth 100
+$jsonstr = ConvertTo-Json -Depth 100 @{
+  Number = 123;
+  String = '日本語 記号''"{}<>';
+  DateTimeStr = Get-Date -Format "yyyy/MM/dd HH:mm:ss";
+  Array = @(1,2,3);
+  Hash = @{Key1="value1"; Key2="value2"};
+  Null = $null;
+}
 # JSON文字列をオブジェクトに変換
-$jsonobj = ConvertFrom-Json '{"Key1":"value1","Key2":"日本語 記号''\"{}<>"}' 
+$jsonobj = ConvertFrom-Json '{"Number":123, "String":"日本語 記号''\"{}<>", "DateTimeStr":"2021/1/1 01:02:03", "Array":[1,2,3], "Hash":{"Key1":"value1", "Key2":"value2"}, "Null":null}'
 # MakeMd SKIP_START
 $jsonstr
 $jsonobj
+# MakeMd SKIP_END
+<#
+
+上記だと、PowerShell 3.0 以降でないと動作しないので、古い環境でも動作するように、簡易的な関数を考えてみました。
+ただし、ハッシュデータをJSON文字列に変換する関数のみ。その逆の変換は、手間がかかりそうなので割愛。
+
+#>
+function ConvertToJson($data) {
+  if ($data -is [string]) {
+    '"' + $data + '"'
+  } elseif ($data -is [Array]) {
+    $arr = $data | %{
+      ConvertToJson $_
+    }
+    '[' + ($arr -join ', ') + ']'
+  } elseif ($data -is [Hashtable]) {
+    $arr = $data.GetEnumerator() | sort Key | %{
+      '"' + $_.Key + '": ' + (ConvertToJson $_.Value)
+    }
+    '{' + ($arr -join ', ') + '}'
+  } else {
+    $data
+  }
+}
+$hash = @{
+  Number = 123;
+  String = "abc";
+  Array = @(1,2,3,@(4,5));
+  Hash = @{Key1="value1"; Key2="value2"};
+}
+$jsonstr = ConvertToJson $hash
+# MakeMd SKIP_START
+$jsonstr
 # MakeMd SKIP_END

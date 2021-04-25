@@ -3,4 +3,5 @@
 
 bak/
 
-Doc/Blog/All.md
+Doc/Blog/All*.md
+Net/HttpClient/All*.md

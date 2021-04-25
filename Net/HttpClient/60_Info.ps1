@@ -8,12 +8,19 @@
 
 ## 参考にしたサイト
 
-Invoke-WebRequestコマンドレット
+Invoke-WebRequest/Invoke-WebRequestコマンドレット
 
+- [Invoke-WebRequest (Microsoft.PowerShell.Utility) - PowerShell | Microsoft Docs](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.utility/invoke-webrequest)
+- [Invoke-RestMethod (Microsoft.PowerShell.Utility) - PowerShell | Microsoft Docs](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.utility/invoke-restmethod)
 - [curl/PowerShellでHTTPアクセスいろいろ - Qiita](https://qiita.com/zaki-lknr/items/8950f6acea20961a8afc)
+- [PowerShellでスクレイピング　前編　文字列を取得する - PowerShell Scripting Weblog](http://winscript.jp/powershell/304)
+- [PowerShellでスクレイピング 後編 HTMLをパースする - PowerShell Scripting Weblog](http://winscript.jp/powershell/305)
 
-WebClientクラス
+WebClient/HttpWebRequest/HttpWebResponseクラス
 
+- [WebClient クラス (System.Net) | Microsoft Docs](https://docs.microsoft.com/ja-jp/dotnet/api/system.net.webclient?view=net-5.0)
+- [HttpWebRequest クラス (System.Net) | Microsoft Docs](https://docs.microsoft.com/ja-jp/dotnet/api/system.net.httpwebrequest)
+- [HttpWebResponse クラス (System.Net) | Microsoft Docs](https://docs.microsoft.com/ja-jp/dotnet/api/system.net.httpwebresponse)
 - [ファイルをダウンロードし表示する - .NET Tips (VB.NET,C#...)](https://dobon.net/vb/dotnet/internet/webclientopenread.html)
 - [POSTでデータを送信する - .NET Tips (VB.NET,C#...)](https://dobon.net/vb/dotnet/internet/webrequestpost.html)
 

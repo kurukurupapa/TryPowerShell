@@ -10,12 +10,23 @@ HTTPアクセスするためのクライアント機能は、Invoke-WebRequestコマンドレット、Invok
 
 - Invoke-WebRequestコマンドレット：PowerShell 3.0 以降
 - Invoke-RestMethodコマンドレット：PowerShell 3.0 以降
-- System.Net.Http.HttpClientクラス：.NET Framework 4.5 以降（なので、PowerShell 4.0 以降）
-- System.Net.WebClientクラス：.NET Framework 1.1 以降（なので、どのPowerShellバージョンでも使用可能）
+- HttpClientクラス：.NET Framework 4.5 以降（なので、PowerShell 4.0 以降。Invoke-WebRequest/Invoke-RestMethodコマンドレットで概ね同じことができると思ったので今回未使用。）
+- WebClientクラス：.NET Framework 1.1 以降（なので、どのPowerShellバージョンでも使用可能。HttpWebRequest/HttpWebResponseクラスより少し便利。）
+- HttpWebRequest/HttpWebResponseクラス：.NET Framework 1.1 以降（なので、どのPowerShellバージョンでも使用可能。WebClientクラスより細かいことができる。）
+
+上記のように、HTTPアクセスするためのコマンドレットやクラスが色々用意されています。
+正直、どれを使えばよいのか迷ってしまったのですが、一通り触ってみて、次のように使い分ければよいのかな、と思いました。
+
+- PowerShell 3.0 以降の環境
+  - APIをコールするなら、Invoke-RestMethodコマンドレット
+  - Webページを取得するなら、Invoke-WebRequestコマンドレット
+- PowerShell 2.0 以前の環境
+  - 基本、WebClientクラス
+  - リクエスト/レスポンスを細かく制御したいなら、HttpWebRequest/HttpWebResponseクラス
 
 ## Invoke-WebRequestコマンドレット GETメソッド
 
-例：Google検索
+例：Google検索（GETメソッド、KeyValue風リクエスト、HTMLレスポンス）
 
 #>
 $url = 'https://www.google.com/search'
@@ -24,9 +35,10 @@ $params = @{"q"="Powershell"}
 # 方式１．コンテンツをレスポンスオブジェクトとして取得
 $res = Invoke-WebRequest $url -Body $params
 # MakeMd SKIP_START
+$res.GetType().FullName  #=> "Microsoft.PowerShell.Commands.HtmlWebResponseObject"
 $res.StatusCode.ToString() + " " + $res.StatusDescription 
 $res.Headers
-$res.Content.Substring(0, 1000)
+$res.Content.Substring(0, 1000) #先頭だけ表示してみる
 # MakeMd SKIP_END
 
 # 方式２．コンテンツをファイルに保存
@@ -35,18 +47,36 @@ Invoke-WebRequest $url -Body $params -OutFile 'D:\tmp\out.txt'
 Get-Content 'D:\tmp\out.txt' | Select-Object -First 5
 # MakeMd SKIP_END
 
-# 方式３．エラー考慮
+# 補足．エラー考慮
 try {
-  $res = Invoke-WebRequest $url -Body $params 
+  $res = Invoke-WebRequest 'https://www.google.com/存在しないページ'
   $res.StatusCode.ToString() + " " + $res.StatusDescription 
   $res.Headers
   $res.Content
 } catch {
-  $error[0].Exception.Response.StatusCode.value__
+  # ステータスコード
+  echo $_.Exception.Response.StatusCode.value__
+  # レスポンスボディ
+  $stream = $_.Exception.Response.GetResponseStream()
+  $reader = New-Object System.IO.StreamReader $stream
+  $reader.BaseStream.Position = 0
+  $reader.DiscardBufferedData()
+  echo $reader.ReadToEnd()
+  $reader.Close()  # Closeは$readerと$streamの一方を呼び出せばよい。両方呼び出しても害はない
+  $stream.Close()
 }
+
+# 補足．レスポンスHTMLを解析
+$res = Invoke-WebRequest 'https://weather.yahoo.co.jp/weather/jp/13/4410.html'
+$res.ParsedHtml.title
+$res.ParsedHtml.getElementById("wrnrpt").innerText
+$res.ParsedHtml.getElementsByName("description") | %{ $_.GetAttribute("content") }
+$res.ParsedHtml.getElementsByTagName("title") | %{ $_.innerText }
 <#
 
-例：Yahoo! JAPAN 日本語形態素解析WebAPI（GET）
+- Invoke-WebRequestに、-SessionVariableパラメータを設定するとセッション情報を変数に保存できて、次のInvoke-WebRequest実行時に、-WebSessionパラメータを設定してセッション情報を引き継いだアクセスができるらしい。
+
+例：Yahoo! JAPAN 日本語形態素解析WebAPI（GETメソッド、KeyValue風リクエスト、XMLレスポンス）
 
 #>
 $clientid = "あなたの Yahoo! JAPAN WebAPI 用クライアントID を設定する"
@@ -63,7 +93,7 @@ $xmlobj.OuterXml
 
 ## Invoke-WebRequestコマンドレット POSTメソッド
 
-例：Yahoo! JAPAN 日本語形態素解析WebAPI（POST）
+例：Yahoo! JAPAN 日本語形態素解析WebAPI（POSTメソッド、KeyValue風リクエスト、XMLレスポンス）
 
 #>
 $url = "https://jlp.yahooapis.jp/MAService/V1/parse" 
@@ -89,7 +119,7 @@ $xmlobj = [Xml]$res.Content
 $xmlobj.OuterXml
 <#
 
-例：日本語係り受け解析（POSTメソッド、JSONリクエスト）
+例：日本語係り受け解析（POSTメソッド、JSONリクエスト/レスポンス）
 
 #>
 $url = 'https://jlp.yahooapis.jp/DAService/V2/parse'
@@ -104,169 +134,3 @@ $postbytes = [System.Text.Encoding]::UTF8.GetBytes($poststr)
 $res = Invoke-WebRequest $url -Method 'POST' -Headers $headers -Body $postbytes
 $jsonobj = ConvertFrom-Json $res.Content
 Write-Output (ConvertTo-Json $jsonobj -Depth 100)
-<#
-
-## Invoke-RestMethodコマンドレット GETメソッド
-
-例：Yahoo! JAPAN 日本語形態素解析WebAPI（GET）
-
-#>
-$url = "https://jlp.yahooapis.jp/MAService/V1/parse"
-$params = @{
-  "appid" = $clientid;
-  "results" = "ma,uniq";
-  "uniq_filter" = "9|10";
-  "sentence" = "庭には二羽ニワトリがいる。"}
-$xmldoc = Invoke-RestMethod $url -Body $params
-Write-Output $xmldoc.OuterXml
-
-# エラーを考慮する場合
-try {
-  $xmldoc = Invoke-RestMethod $url -Body $params
-  Write-Output $xmldoc.OuterXml
-} catch {
-  $error[0].Exception.Response.StatusCode.value__
-}
-<#
-
-## Invoke-RestMethodコマンドレット POSTメソッド
-
-例：Yahoo! JAPAN 日本語形態素解析WebAPI（POST）
-
-#>
-$url = "https://jlp.yahooapis.jp/MAService/V1/parse" 
-$headers = @{
-  "User-Agent" = "Yahoo AppID: $clientid";
-  "Content-Type" = "application/x-www-form-urlencoded"}
-
-# 方式１．POSTデータを文字列で指定。
-$poststr = "results=ma,uniq" +
-  "&uniq_filter=" + [System.Web.HttpUtility]::UrlEncode("9|10") +
-  "&sentence=" + [System.Web.HttpUtility]::UrlEncode("庭には二羽ニワトリがいる。")
-$xmldoc = Invoke-RestMethod $url -Method 'POST' -Headers $headers -Body $poststr
-Write-Output $xmldoc.OuterXml
-
-# 方式２．POSTデータを連想配列で指定。自動でURLエンコードされる。
-$params = @{
-  "results" = "ma,uniq"; 
-  "uniq_filter" = "9|10"; 
-  "sentence" = "庭には二羽ニワトリがいる。"}
-$xmldoc = Invoke-RestMethod $url -Method 'POST' -Headers $headers -Body $params
-Write-Output $xmldoc.OuterXml
-<#
-
-例：日本語係り受け解析（POSTメソッド、JSONリクエスト）
-
-#>
-$url = 'https://jlp.yahooapis.jp/DAService/V2/parse'
-$headers = @{
-  "User-Agent" = "Yahoo AppID: $clientid";
-  "Content-Type" = "application/x-www-form-urlencoded"}
-
-# JSONリクエスト。もしASCII文字だけならエンコード不要。
-$poststr = ConvertTo-Json @{
-  id="123"; jsonrpc="2.0"; method="jlp.daservice.parse";
-  params=@{q="うちの庭には二羽鶏がいます"}}
-$postbytes = [System.Text.Encoding]::UTF8.GetBytes($poststr)
-$res = Invoke-RestMethod $url -Method 'POST' -Headers $headers -Body $postbytes
-Write-Output (ConvertTo-Json $res -Depth 100)
-<#
-
-## WebClientクラス GETメソッド
-
-例：Google検索
-
-#>
-$url = 'https://www.google.com/search'
-$wc = New-Object System.Net.WebClient 
-$wc.QueryString.Add("q", "Powershell")
-
-# 方式１．コンテンツを取得し保存。テキストのエンコード変換なしの模様。 
-$wc.DownloadFile($url, 'D:\tmp\out.txt')
-
-# 方式２．コンテンツをバイト配列として取得 
-$resbytes = $wc.DownloadData($url) 
-
-# 方式３．コンテンツを文字列として取得。必要なら$wc.Encodingにエンコードを指定する。 
-$resstr = $wc.DownloadString($url)
-
-# エラーを考慮する場合
-try {
-  $resstr = $wc.DownloadString($url)
-} catch {
-  $error[0].Exception.InnerException.Response.StatusCode.value__
-}
-
-# 後片付け 
-$wc.Dispose()
-<#
-
-例：Yahoo! JAPAN 日本語形態素解析WebAPI（GET）
-
-#>
-$url = "https://jlp.yahooapis.jp/MAService/V1/parse"
-$wc = New-Object System.Net.WebClient
-$wc.Encoding = [System.Text.Encoding]::UTF8
-$wc.QueryString.Add("appid", $clientid)
-$wc.QueryString.Add("results", "ma,uniq")
-$wc.QueryString.Add("uniq_filter", "9|10")
-$wc.QueryString.Add("sentence", "庭には二羽ニワトリがいる。")
-$resstr = $wc.DownloadString($url)
-$wc.Dispose()
-Write-Output $resstr
-<#
-
-## WebClientクラス POSTメソッド
-
-例：Yahoo! JAPAN 日本語形態素解析WebAPI（POST）
-
-#>
-Add-Type -AssemblyName System.Web
-$url = "https://jlp.yahooapis.jp/MAService/V1/parse"
-$wc = New-Object System.Net.WebClient
-$wc.Headers.Add("User-Agent", "Yahoo AppID: $clientid")
-$wc.Headers.Add("Content-Type", "application/x-www-form-urlencoded")
-$wc.Encoding = [System.Text.Encoding]::UTF8
-
-# 方式１．POSTデータを文字列で設定
-$poststr = "results=ma,uniq" +  
-  "&uniq_filter=" + [System.Web.HttpUtility]::UrlEncode("9|10") + 
-  "&sentence=" + [System.Web.HttpUtility]::UrlEncode("庭には二羽ニワトリがいる。")
-$resstr = $wc.UploadString($url, $poststr) 
-Write-Output $resstr
-
-# 方式２．POSTデータを名前と値のコレクションで設定
-$posthash = New-Object System.Collections.Specialized.NameValueCollection 
-$posthash.Add("results", "ma,uniq") 
-$posthash.Add("uniq_filter", "9|10") 
-$posthash.Add("sentence", "庭には二羽ニワトリがいる。") 
-$resbytes = $wc.UploadValues($url, $posthash) 
-$resstr = [System.Text.Encoding]::UTF8.GetString($resbytes)
-Write-Output $resstr
-
-# 方式３．POSTデータをバイト配列で設定（byte[] UploadData(string url, byte[] postdata)）
-# →省略
-
-# 後片付け
-$wc.Dispose() 
-<#
-
-例：日本語係り受け解析（POSTメソッド、JSONリクエスト）
-
-#>
-Add-Type -AssemblyName System.Web
-$url = 'https://jlp.yahooapis.jp/DAService/V2/parse'
-$wc = New-Object System.Net.WebClient
-$wc.Headers.Add("User-Agent", "Yahoo AppID: $clientid")
-$wc.Headers.Add("Content-Type", "application/x-www-form-urlencoded")
-$wc.Encoding = [System.Text.Encoding]::UTF8
-# JSONリクエスト。もしASCII文字だけなら$wc.UploadString()を使用可能。
-$poststr = '{"id":"123","jsonrpc":"2.0","method":"jlp.daservice.parse","params":{' +
-  '"q":"うちの庭には二羽鶏がいます"' +
-  '}}'
-$postbytes = [System.Text.Encoding]::UTF8.GetBytes($poststr)
-$resbytes = $wc.UploadData($url, $postbytes)
-$resstr = [System.Text.Encoding]::UTF8.GetString($resbytes)
-Write-Output $resstr
-# 後片付け
-$wc.Dispose()
