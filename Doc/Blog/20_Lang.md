@@ -45,11 +45,15 @@ if ("abcde" -match "b(c)d") { $Matches } #=> @{0="bcd";1="c"}
 日時
 
 ```powershell
-$dtstr = Get-Date -Format "yyyy/MM/dd HH:mm:ss"
-$dtobj = Get-Date "2021-01-01 01:01:01"
-$dtobj = Get-Date "2021/01/01 01:01:01"
+# 日時オブジェクト
+$dtobj = Get-Date                        # 現在日時
+$dtobj = Get-Date "2021/01/01 01:01:01"  # "2021/1/1 0:0:0"や"2021-01-01"なども可能。
 $dtobj = [Datetime]"2021/01/01 01:01:01"
 $dtobj = $dtobj.AddYears(1).AddMonths(1).AddDays(1).AddHours(1).AddMinutes(1).AddSeconds(1)
+# 日時文字列
+$dtstr = Get-Date -Format "yyyy/MM/dd HH:mm:ss" # 現在日時の文字列
+$dtstr = $dtobj.ToString("yyyyMMdd HHmmss")
+# 2つの日時の差
 $timespan = $dtobj - [Datetime]"2021/01/01 01:01:01"
 ```
 
@@ -78,29 +82,41 @@ $paBaseName = $psname -replace "\.ps1$", ""
 配列
 
 ```powershell
+# 作成
 $arr = @("a", "b", "c")
 $arr += "d"
 $arr += @("e", "f")
 $arr[0] = "A"
+# 参照
 $arr[0]
 $arr[-1]
 $arr.Length
 $arr | %{ echo $_ }
 foreach ($e in $arr) { echo $e }
+# 比較
+$index = $arr.IndexOf("b")
+if ($arr.Contains("b")) { "処理" }
 ```
 
 動的配列
 
 ```powershell
+# 作成
 $list1 = New-Object System.Collections.Generic.List[string]
 $list1 = [System.Collections.Generic.List[string]]::new()
 $list1.Add("value1")
-$list1 += @("value2", "value3")
+$list1 += "value2"
+$list1 += @("value3", "value4")
+# 参照
 $list1[0]
 $list1.Length
 $list1 | %{ echo $_ }
 foreach ($e in $list1) { echo $e }
+# 比較
+$index = $list1.IndexOf("value1")
+if ($list1.Contains("value1")) { "処理" }
 
+# 作成
 $list2 = New-Object System.Collections.Generic.List[PSObject]
 $list2.Add(@{key1="value1"; key2="value2"})
 ```
@@ -108,14 +124,23 @@ $list2.Add(@{key1="value1"; key2="value2"})
 連想配列
 
 ```powershell
+# 作成
 $hash = @{key1="value1"; key2="value2"; key3="value3"}
 $hash.key4 = "value4"
 $hash["key5"] = "value5"
 $hash += @{"key6"="value6"}
+$hash.Add("key7", "value7")
+$hash.Remove("key2")
+$hash.Clear()
+# 参照
 $hash.key1
 $hash["key1"]
-$hash | %{ echo $_ }
-foreach ($e in $hash) { echo $e }
+$hash.Count
+$hash.GetEnumerator() | sort Key | %{ $_.Key + "," + $_.Value }
+foreach ($e in $hash.GetEnumerator()) { $e.Key + "," + $e.Value }  # 順不同
+# 比較
+if ($hash.ContainsKey("key1")) { "処理" }
+if ($hash.ContainsValue("value1")) { "処理" }
 ```
 
 コマンドライン引数の取得
@@ -187,8 +212,23 @@ class Class1 {
   }
 }
 $obj1 = New-Object Class1 "value1"
-$obj2 = [Class1]::new("value2")
+$obj1 = [Class1]::new("value1")
 $obj1.ToString()
+
+# 継承
+class Class2 : Class1 {
+  $item2
+  Class2($item1, $item2) : base($item1) {
+    $this.item2 = $item2
+  }
+  [string] ToString() {
+    $result = ([Class1]$this).ToString()
+    $result += ",item2=" + $this.item2
+    return $result
+  }
+}
+$obj2 = New-Object Class2("value1", "value2")
+$obj2.ToString()
 ```
 
 try-catch
@@ -197,6 +237,7 @@ try-catch
 try {
   throw "ERROR"
 } catch {
+  echo $_
   echo $error[0]
 }
 ```
@@ -208,7 +249,31 @@ Get-Process | %{ $_.ProcessName } | sort | Get-Unique
 Get-Process | ?{ $_.CPU -ge 100 }
 Get-Process | sort CPU -Descending
 Get-Process | select ProcessName
-"b","a","b" | select -Unique -First 3 #=> "b","a"
+"b","a","b" | select -Unique -First 3  #=> "b","a"
+Get-Process | foreach -Begin { $count=0 } -Process { $count++ } -End { $count }
+```
+
+パイプ処理内で、クラスメソッドを呼び出して、出力処理を行うと思わぬ動きになったのでメモ。
+以下、3パターンの出力処理で、クラスメソッドと関数での動作の違いを表す。
+
+```powershell
+class Class1 {
+  [string] Method1($a) {
+    $a * 1               # ←出力されない
+    Write-Output $a * 2  # ←出力されない
+    return $a * 3        # ←出力対象
+  }
+}
+$obj = New-Object Class1
+1..3 | %{ $obj.Method1($_) }  #=> (3,6,9)
+
+# 関数の場合
+function Func1($a) {
+  $a * 1                 # ←出力対象
+  Write-Output ($a * 2)  # ←出力対象
+  return $a * 3          # ←出力対象
+}
+1..3 | %{ Func1($_) }  #=> (1,2,3,2,4,6,3,6,9)
 ```
 
 外部コマンド実行
@@ -225,4 +290,15 @@ $lastexitcode
 
 ```powershell
 Invoke-Expression "1+1" #=> 2
+```
+
+ランダム
+
+```powershell
+$value = Get-Random 100                        # 0～99でランダムな値
+$value = Get-Random -Minimum -100 -Maximum 100 # -100～99でランダムな値
+$value = 1, 2, 3, 5, 8, 13 | Get-Random        # 選択肢から1つ選択
+$value = "red", "yellow", "blue" | Get-Random
+$arr = 1, 2, 3, 5, 8, 13 | Get-Random -Count 3 # 選択肢から複数選択
+$arr = 1, 2, 3, 5, 8, 13 | Get-Random -Shuffle # シャッフル
 ```
