@@ -7,6 +7,13 @@
 $PSVersionTable
 ```
 
+過去バージョンのPowershellを起動する方法
+※ただし、動作しない処理もある模様。WebClientのメソッド呼び出しでエラーが発生した。
+
+```bat
+powerhhell.exe -version 2.0
+```
+
 ## PowerShellスクリプトを呼び出すバッチファイル
 
 ps1ファイルを実行するとき、セキュリティポリシーを指定して実行するためのバッチファイルです。ps1ファイルの名前が ps1sample.ps1 の場合、ps1sample.bat という名前で、次のバッチファイルを作成します。

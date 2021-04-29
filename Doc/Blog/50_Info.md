@@ -41,3 +41,6 @@ PowerShellの各バージョンにおいて基盤とする.NET Frameworkのバ�
 - [トーストのコンテンツ - UWP applications | Microsoft Docs](https://docs.microsoft.com/ja-jp/windows/uwp/design/shell/tiles-and-notifications/adaptive-interactive-toasts)
 - [PowerShellメモ　クリップボード操作 - Qiita](https://qiita.com/Kosen-amai/items/2e92c9b1dc19fd12b6f5)
 - [2016年度版エクセルスクショ取得ツール - Qiita](https://qiita.com/asterisk9101/items/a49ebe010e19e5c62f98)
+- [PowerShellを使ってIISログを定期的に圧縮・削除する - Qiita](https://qiita.com/wataruf01/items/12b51423a1a2958c2cd0)
+- [Windowsで，簡単にファイルを「ごみ箱」に送るバッチのサンプルコード。削除処理に「シェル名前空間」を使う仕組みの解説 - 主に言語とシステム開発に関して](https://language-and-engineering.hatenablog.jp/entry/20150528/WindowsBatSendFileToRecycleBin)
+- [PowerShellでGUI表示をする - 株式会社アウルキャンプ](https://owlcamp.jp/powershell%E3%81%A7gui%E8%A1%A8%E7%A4%BA%E3%82%92%E3%81%99%E3%82%8B/)

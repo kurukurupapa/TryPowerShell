@@ -141,6 +141,85 @@ cat $incsv | Select-Object -Skip 1 | %{
 }
 ```
 
+### CSVファイル
+
+CSVファイルの入出力は、 Export-Csv, Import-Csv コマンドレットで実現できました。
+
+- [Export-Csv (Microsoft.PowerShell.Utility) - PowerShell | Microsoft Docs](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.utility/export-csv)
+- [Import-Csv (Microsoft.PowerShell.Utility) - PowerShell | Microsoft Docs](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.utility/import-csv)
+
+```powershell
+$csvPath = "D:\tmp\dummy.csv"
+$sampleObj = @(
+  [PSCustomObject]@{ Column1=1; Column2="A"; 日本語="あ"; }
+  [PSCustomObject]@{ Column1=2; Column2="B"; 日本語="い"; }
+)
+
+# CSVファイル書き込み
+# 各カラムは、ダブルクォーテーションで括られる。
+# -Forceオプションで既存ファイルを上書き、-Appendオプションで既存ファイルへ追記。
+$sampleObj | Export-Csv $csvPath -NoTypeInformation -Encoding Default
+
+# CSVファイル読み込み
+Import-Csv $csvPath -Encoding Default | %{ $_.Column1 }
+# CSVファイル読み込み（ヘッダーなし）
+Import-Csv $csvPath -Encoding Default -Header ("Column1","Column2","日本語") | %{ $_ }
+```
+
+CSV形式の文字列と、データオブジェクトとの変換には、 ConvertFrom-Csv, ConvertTo-Csv コマンドレットが用意されていました。
+
+- [ConvertFrom-Csv (Microsoft.PowerShell.Utility) - PowerShell | Microsoft Docs](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.utility/convertfrom-csv)
+- [ConvertTo-Csv (Microsoft.PowerShell.Utility) - PowerShell | Microsoft Docs](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.utility/convertto-csv)
+
+```powershell
+$sampleObj = @(
+  [PSCustomObject]@{ Column1=1; Column2="A"; 日本語="あ"; }
+  [PSCustomObject]@{ Column1=2; Column2="B"; 日本語="い"; }
+)
+$sampleCsv = "Column1,Column2,日本語`n1,A,あ`n2,B,い"
+$sampleCsv2 = "1,A,あ`n2,B,い"
+
+# オブジェクトからCSV文字列へ変換
+# 1行目にヘッダーが付く
+$sampleObj | ConvertTo-Csv -NoTypeInformation
+#=> @('"Column1","Column2","日本語"', '"1","A","あ"', '"2","B","い"')
+
+# CSV文字列からオブジェクトへ変換（ヘッダーあり）
+$sampleCsv | ConvertFrom-Csv | %{ $_.Column1 }
+# CSV文字列からオブジェクトへ変換（ヘッダーなし）
+$sampleCsv2 | ConvertFrom-Csv -Header ("Column1","Column2","日本語") | %{ $_ }
+```
+
+各コマンドレットでは、-Delimiterオプションを使用することで、カンマ区切り以外のファイルも扱える。
+次の例では、TSVファイル（タブ区切り）を扱ってみました。
+
+```powershell
+$tsvPath = "D:\tmp\dummy.tsv"
+$sampleObj = @(
+  [PSCustomObject]@{ Column1=1; Column2="A"; 日本語="あ"; }
+  [PSCustomObject]@{ Column1=2; Column2="B"; 日本語="い"; }
+)
+$sampleObj | Export-Csv $tsvPath -NoTypeInformation -Encoding Default -Delimiter "`t"
+Import-Csv $tsvPath -Encoding Default -Delimiter "`t" | %{ $_.Column1 }
+```
+
+少し工夫して、Markdownの表を読み込んでみました。
+なんだか煩雑で、うれしくない感じになってしまいました。
+
+```powershell
+$text = @"
+| Column1 | Column2 | 日本語 |
+| ------- | ------- | ------ |
+| 1       | A       | あ     |
+| 2       | B       | い     |
+"@
+$text.Split("`n") |
+  % -Begin { $i=0 } -Process { if($i -ne 1){ ($_ -replace " *\| *", "|").Trim("|") }; $i++ } |
+  ConvertFrom-Csv -Delimiter "|" |
+  %{ $_.Column1 }
+```
+
+
 ## 画像ファイル操作
 
 ### リサイズ
@@ -241,8 +320,41 @@ Get-ChildItem $otop -File -Recurse
 Remove-Itemだけで実装してもよいのですが、対象ファイルが存在しないとエラーメッセージが表示されてしまうので、それを回避するために、存在チェックしてから、削除しています。
 
 ```powershell
-$delpath = "D:\tmp\dummy.txt"
-if (Test-Path $delpath) { Remove-Item $delpath }
+$delPath = "D:\tmp\dummy.txt"
+if (Test-Path $delPath) { Remove-Item $delPath }
+```
+
+次のようにして、ファイルをWindowsのごみ箱へ入れることもできました。
+
+```powershell
+$delPath = "D:\tmp\dummy.txt"
+$dir = Split-Path $delPath -Parent
+$name = Split-Path $delPath -Leaf
+# MakeAllMd SKIP_START
+echo "DUMMY" | Set-Content $delPath
+# MakeAllMd SKIP_END
+$shell = New-Object -ComObject Shell.Application
+$dirObj = $shell.Namespace($dir)
+$fileObj = $dirObj.ParseName($name)
+$fileObj.InvokeVerb("delete")
+# 1行にまとめてみた
+(New-Object -ComObject Shell.Application).Namespace($dir).ParseName($name).InvokeVerb("delete")
+```
+
+### ファイル/フォルダ圧縮
+
+Compress-Archiveコマンドレットを使うと、ファイルやディレクトリの圧縮アーカイブを作成できました。
+
+- [Compress-Archive (Microsoft.PowerShell.Archive) - PowerShell | Microsoft Docs](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.archive/compress-archive)
+- -Forceオプションで、既存ZIPが存在するとき上書き。
+- -Updateオプションで、既存ZIPが存在するとき追加。なければ、新規作成。
+
+```powershell
+# MakeAllMd SKIP_START
+cd "D:\tmp"
+# MakeAllMd SKIP_END
+Compress-Archive ".\dummy1.txt" ".\dummy.zip" -Force
+Compress-Archive (".\dummy2.txt", ".\subdir") ".\dummy.zip" -Update
 ```
 
 ## ネットワーク通信
@@ -389,4 +501,53 @@ while ($true) {
   Set-Clipboard $null
   Start-Sleep 1
 }
+```
+
+### Windowsフォーム
+
+Windowのフォームを表示させることもできました。
+次の例では、3つのボタンが縦に並んだフォームを表示し、ボタンが押されると、押されたボタンの番号を $global:formResult へ保存し、フォームを閉じます。
+
+- [Form クラス (System.Windows.Forms) | Microsoft Docs](https://docs.microsoft.com/ja-jp/dotnet/api/system.windows.forms.form)
+- [コントロールのレイアウト オプション - Windows Forms .NET | Microsoft Docs](https://docs.microsoft.com/ja-jp/dotnet/desktop/winforms/controls/layout)
+- [Button クラス (System.Windows.Forms) | Microsoft Docs](https://docs.microsoft.com/ja-jp/dotnet/api/system.windows.forms.button)
+
+```powershell
+Add-Type -AssemblyName System.Windows.Forms
+
+$form = New-Object System.Windows.Forms.Form
+$form.AutoSize = $true
+$form.AutoSizeMode = [System.Windows.Forms.AutoSizeMode]::GrowAndShrink
+$form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
+$form.MaximizeBox = $false
+$form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+$form.Text = "サンプルフォーム"
+
+$layout = New-Object System.Windows.Forms.FlowLayoutPanel
+$layout.AutoSize = $true
+$layout.AutoSizeMode = [System.Windows.Forms.AutoSizeMode]::GrowAndShrink
+$layout.FlowDirection = [System.Windows.Forms.FlowDirection]::TopDown
+$form.Controls.Add($layout)
+
+$button = @()
+for ($i = 0; $i -lt 3; $i++) {
+  $button += New-Object System.Windows.Forms.Button
+  $button[$i].AutoSize = $true
+  $button[$i].AutoSizeMode = [System.Windows.Forms.AutoSizeMode]::GrowAndShrink
+  $button[$i].Tag = $i
+  $button[$i].Text = "サンプルフォームのサンプルボタン $($i + 1)"
+  $button[$i].Add_Click({
+    param($sender, $eventArgs)
+    $dummy = "Click! $($sender.Tag) $(Get-Date)"
+    Write-Host $dummy
+    $sender.Text = $dummy
+    $global:formResult = $sender.Tag
+    $form.Close()
+  })
+  $layout.Controls.Add($button[$i])
+}
+
+$form.ShowDialog() | Out-Null
+$form.Dispose()
+echo $global:formResult
 ```

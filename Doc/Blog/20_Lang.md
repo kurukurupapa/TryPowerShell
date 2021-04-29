@@ -46,15 +46,22 @@ if ("abcde" -match "b(c)d") { $Matches } #=> @{0="bcd";1="c"}
 
 ```powershell
 # 日時オブジェクト
-$dtobj = Get-Date                        # 現在日時
-$dtobj = Get-Date "2021/01/01 01:01:01"  # "2021/1/1 0:0:0"や"2021-01-01"なども可能。
-$dtobj = [Datetime]"2021/01/01 01:01:01"
-$dtobj = $dtobj.AddYears(1).AddMonths(1).AddDays(1).AddHours(1).AddMinutes(1).AddSeconds(1)
+$dtObj = Get-Date                        # 現在日時
+$dtObj = Get-Date "2021/01/01 01:01:01"  # "2021/1/1 0:0:0"や"2021-01-01"なども可能。
+$dtObj = [Datetime]"2021/01/01 01:01:01"
+$dtObj = $dtObj.AddYears(1).AddMonths(1).AddDays(1).AddHours(1).AddMinutes(1).AddSeconds(1)
 # 日時文字列
-$dtstr = Get-Date -Format "yyyy/MM/dd HH:mm:ss" # 現在日時の文字列
-$dtstr = $dtobj.ToString("yyyyMMdd HHmmss")
+$dtStr = Get-Date -Format "yyyy/MM/dd HH:mm:ss" # 現在日時
+$dtStr = Get-Date -Format o                     # ISO8601（yyyy-MM-ddTHH:mm:ss.fffffffzzz）形式
+$dtStr = $dtObj.ToString("yyyyMMdd HHmmss")
+$dtStr = $dtObj.ToString("o")
 # 2つの日時の差
-$timespan = $dtobj - [Datetime]"2021/01/01 01:01:01"
+$timeSpan = $dtObj - [Datetime]"2021/01/01 01:01:01"
+# MakeAllMd SKIP_START
+$dtObj
+$dtStr
+$timeSpan
+# MakeAllMd SKIP_END
 ```
 
 パス操作

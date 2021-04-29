@@ -37,10 +37,19 @@ Write-Verbose "$psName Start"
 # tags: PowerShell Windows
 # author: kurukurupapa@github
 # slide: false
-$outPath = Join-Path $psDir "All.md"
-Get-ChildItem (Join-Path $psDir "*.md") -Exclude "All*.md" | `
-  %{ Get-Content $_.FullName -Encoding UTF8 } | `
-  %{ [Text.Encoding]::UTF8.GetBytes($_ + "`r`n") } | `
+$outPath = Join-Path $psDir "All_${timestamp}.md"
+$skipFlag = $false
+Get-ChildItem (Join-Path $psDir "*.md") -Exclude "All*.md" |
+  %{ Get-Content $_.FullName -Encoding UTF8 } |
+  %{
+    if ($_ -eq '# MakeAllMd SKIP_START') {
+      $skipFlag = $true
+    } elseif ($_ -eq '# MakeAllMd SKIP_END') {
+      $skipFlag = $false
+    } elseif (!$skipFlag) {
+      [Text.Encoding]::UTF8.GetBytes($_ + "`r`n")
+    }
+  } |
   Set-Content -Encoding Byte $outPath
 
 Write-Verbose "$psName End"
