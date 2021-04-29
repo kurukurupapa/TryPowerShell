@@ -2,6 +2,9 @@
 
 ## HttpWebRequest/HttpWebResponseクラス
 
+- HTTPリクエスト時のヘッダー情報は、HttpWebRequest のプロパティとして設定可能。（例：$res.UserAgent = xxx）
+- プロパティで用意されていないヘッダー情報は、HttpWebRequest の Headers プロパティに設定する。（例：$res.Headers['Authorization'] = xxx）
+
 ### GETメソッド
 
 例：Google検索（GETメソッド）

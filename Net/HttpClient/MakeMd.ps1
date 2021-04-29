@@ -33,7 +33,7 @@ $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 # ˆ—ŠJn
 Write-Verbose "$psName Start"
 
-$outPath = Join-Path $psDir "All.md"
+$outPath = Join-Path $psDir "All_${timestamp}.md"
 Get-ChildItem (Join-Path $psDir "[0-9][0-9]_*.ps1") | %{
   Get-Content $_.FullName | % -Begin {
     $switch = 'PS'
