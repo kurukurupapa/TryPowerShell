@@ -2,6 +2,7 @@
 *.log
 
 bak/
+**/TestResult/*.*
 
 Doc/Blog/All*.md
 Net/HttpClient/All*.md
