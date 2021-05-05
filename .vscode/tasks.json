@@ -1,0 +1,27 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "echo",
+      "type": "shell",
+      "command": "echo Hello"
+    },
+    {
+      "label": "MakeAllMd Doc/Blog",
+      "type": "shell",
+      "command": "cd Doc/Blog; powershell -ExecutionPolicy RemoteSigned -File MakeAllMd.ps1"
+    },
+    {
+      "label": "MakeMd Net/HttpClient",
+      "type": "shell",
+      "command": "cd Net/HttpClient; powershell -ExecutionPolicy RemoteSigned -File MakeMd.ps1"
+    },
+    {
+      "label": "MakeMd Net/MailClient",
+      "type": "shell",
+      "command": "cd Net/MailClient; powershell -ExecutionPolicy RemoteSigned -File MakeMd.ps1"
+    }
+  ]
+}
