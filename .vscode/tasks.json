@@ -11,7 +11,12 @@
     {
       "label": "MakeAllMd Doc/Blog",
       "type": "shell",
-      "command": "cd Doc/Blog; powershell -ExecutionPolicy RemoteSigned -File MakeAllMd.ps1"
+      "command": "cd Doc/Blog; powershell -ExecutionPolicy RemoteSigned -File MakeAllMd.ps1",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
     },
     {
       "label": "MakeMd Net/HttpClient",

@@ -53,6 +53,7 @@ $dtObj = $dtObj.AddYears(1).AddMonths(1).AddDays(1).AddHours(1).AddMinutes(1).Ad
 # 日時文字列
 $dtStr = Get-Date -Format "yyyy/MM/dd HH:mm:ss" # 現在日時
 $dtStr = Get-Date -Format o                     # ISO8601（yyyy-MM-ddTHH:mm:ss.fffffffzzz）形式
+$dtStr = Get-Date -Format u                     # yyyy-MM-dd HH:mm:ss 形式
 $dtStr = $dtObj.ToString("yyyyMMdd HHmmss")
 $dtStr = $dtObj.ToString("o")
 # 2つの日時の差
@@ -193,10 +194,11 @@ Get-Process | `
 関数
 
 ```powershell
-function Func1($arg1, $arg2=123) {
-  return "$arg1,$arg2"
+function Func1($arg1, $arg2=123, [switch]$arg3) {
+  return "$arg1,$arg2,$arg3"
 }
-Func1 "abc" #=> "abc,123"
+Func1 "abc"           #=> "abc,123,False"
+Func1 "abc" 456 -arg3 #=> "abc,456,True"
 
 function Func2([Parameter(ValueFromPipeline=$true)]$arg1) {
   process {

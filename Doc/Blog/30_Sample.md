@@ -66,6 +66,7 @@ Write-Verbose "$psName End"
 柔軟にファイル操作ができる。ただし、処理が遅いようなので、数百MB単位などのファイルは取扱注意。
 cat, typeは、Get-Contentのエイリアス。
 compare, diffは、Compare-Objectのエイリアス。
+ファイルへの追記やクリアは、Add-Content、Clear-Contentコマンドレットで可能。
 
 ```powershell
 # 出力（全量、先頭のみ、末尾のみ）
@@ -348,6 +349,7 @@ Compress-Archiveコマンドレットを使うと、ファイルやディレク�
 - [Compress-Archive (Microsoft.PowerShell.Archive) - PowerShell | Microsoft Docs](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.archive/compress-archive)
 - -Forceオプションで、既存ZIPが存在するとき上書き。
 - -Updateオプションで、既存ZIPが存在するとき追加。なければ、新規作成。
+- たぶん、PowerShell 5.0 以降
 
 ```powershell
 # MakeAllMd SKIP_START
@@ -357,7 +359,18 @@ Compress-Archive ".\dummy1.txt" ".\dummy.zip" -Force
 Compress-Archive (".\dummy2.txt", ".\subdir") ".\dummy.zip" -Update
 ```
 
+展開するときは、Expand-Archiveコマンドレットを使用しました。
+
+```powershell
+# MakeAllMd SKIP_START
+cd "D:\tmp"
+# MakeAllMd SKIP_END
+Expand-Archive ".\dummy.zip" ".\output" -Force
+```
+
 ## ネットワーク通信
+
+### HTTP/FTPクライアント
 
 HTTP/FTP通信で、Webページやファイルをダウンロードし、ファイルに保存します。Invoke-WebRequestコマンドレットのエイリアスには、wget, curlが定義されています。
 
@@ -372,6 +385,48 @@ Invoke-WebRequest -Uri $url -OutFile 'out.txt'
 ```
 
 もっと細かい話は、[PowerShellで HTTPアクセスする いくつかの方法 - Qiita](https://qiita.com/kurukurupapa@github/items/c77b7be7f3c05453e75e) に記述しました。
+
+### メール送信
+
+GmailのSMTPサーバを利用して、メール送信することができました。
+
+```powershell
+$password = ConvertTo-SecureString "Gmailのパスワード" -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential(
+  "Gmailのアカウント名", $password)
+$from = "送信元のGmailメールアドレス"
+$to = "送信先メールアドレス"
+Send-MailMessage `
+  -From $from `
+  -To $to `
+  -Subject "テストメール" `
+  -Body "テストメールです。" `
+  -Attachments "D:\tmp\dummy.txt" `
+  -Encoding UTF8 `
+  -SmtpServer "smtp.gmail.com" `
+  -Port 587 `
+  -UseSsl `
+  -Credential $credential
+```
+
+SMTPサーバの認証情報を暗号化してファイル保存するのは、次のようにしてできました。
+
+```powershell
+# GmailのSMTPサーバに対する認証情報をファイル保存
+$path = Join-Path ([System.Environment]::GetFolderPath('MyDocuments')) "ps_mail.json"
+$credential = Get-Credential
+ConvertTo-Json @{
+  userName = $credential.UserName;
+  password = $credential.Password | ConvertFrom-SecureString;
+  } | Set-Content $path
+
+# 上記ファイルの読み込み
+$jsonObj = Get-Content $path | ConvertFrom-Json
+$password = $jsonObj.password | ConvertTo-SecureString
+$credential = New-Object System.management.Automation.PsCredential($jsonObj.userName, $password)
+```
+
+メール送信についての詳細は、[PowerShellで Gmail/Yahoo!JAPAN SMTPを利用したメール送信 - Qiita](https://qiita.com/kurukurupapa@github/items/2e16e9bc05dccafcb4fe) に記述しました。
 
 ## アプリケーション操作
 

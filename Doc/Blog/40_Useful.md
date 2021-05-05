@@ -8,7 +8,7 @@ $PSVersionTable
 ```
 
 過去バージョンのPowershellを起動する方法
-※ただし、動作しない処理もある模様。WebClientのメソッド呼び出しでエラーが発生した。
+ただし、動作しない処理もある模様。WebClientのメソッド呼び出しでエラーが発生した。
 
 ```bat
 powerhhell.exe -version 2.0
