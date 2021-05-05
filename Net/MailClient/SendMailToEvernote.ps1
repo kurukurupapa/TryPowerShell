@@ -14,7 +14,7 @@ SendMailToEvernote.ps1 "D:\tmp\dummy.txt"
 
 [CmdletBinding()]
 Param(
-  [string]$path
+  [parameter(ValueFromRemainingArguments=$true)][string[]]$path
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -55,6 +55,8 @@ $credential = New-Object System.Management.Automation.PSCredential($config.smtpU
 $timestamp = Get-Date -Format u
 $subject = "$psBaseName $timestamp"
 $body = "送信日時: $timestamp"
+Write-Host "メールタイトル：$subject"
+Write-Host "添付ファイル：$($path -join ', ')"
 Send-MailMessage `
   -From ($config.smtpUserName + "@gmail.com") `
   -To $config.to `
