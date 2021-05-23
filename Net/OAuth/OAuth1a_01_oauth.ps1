@@ -22,7 +22,7 @@ function GetSignatureBaseString($method, $url, $params) {
 # GetSignatureBaseString "POST" "https://sample.com" @{a="1";b="2";c="A B"}
 
 # oauth_signatureを取得
-function GetSignature($signatureBaseString, $consumerKey, $tokenSecret) {
+function GetSignature($signatureBaseString, $consumerSecret, $tokenSecret) {
   # $key = $consumerSecret + '&' + $tokenSecret
   $key = [Uri]::EscapeDataString($consumerSecret) + '&' + [Uri]::EscapeDataString($tokenSecret)
   $hmacsha1 = New-Object System.Security.Cryptography.HMACSHA1
@@ -75,14 +75,14 @@ function PrintWebException($e) {
 }
 
 # OAuth1.0aでAPI呼び出しを実行
-# 引数の $callback, $token, $tokenSecret, $verifier, $optionParams, $body は、必要に応じて設定する。
+# 引数の $callback, $token, $tokenSecret, $verifier, $optionParams, $bodyParams は、必要に応じて設定する。
 # $optionParamsの値は、Authorizationヘッダーやoauth_signatureの計算に含める。
-# $bodyの値は、GETパラメータまたはPOSTデータとなる。
+# $bodyParamsの値は、GETパラメータまたはPOSTデータとなる。
 # リクエストトークン取得時は、$token, $tokenSecret, $verifier なし、必要に応じて $callback を設定する。
 # アクセストークン取得時は、$token, $tokenSecret にリクエストトークン取得結果を設定し、$verifier にユーザ認証結果を設定する。
 # リソースAPI呼び出し時は、$token, $tokenSecret にアクセストークン取得結果を設定し、呼び出すAPIにGET/POSTパラメータを付加するときは、optionParams を設定する。
 function InvokeOauthApi($method, $url, $consumerKey, $consumerSecret,
-  $callback=$null, $token='', $tokenSecret='', $verifier=$null, $optionParams=@{}, $body=$null,
+  $callback=$null, $token='', $tokenSecret='', $verifier=$null, $optionParams=@{}, $bodyParams=$null,
   $signatureMethod='HMAC-SHA1') {
 
   # oauth_nonceは、一意な値であればよいので、とりあえずタイムスタンプから作成する。
@@ -108,7 +108,11 @@ function InvokeOauthApi($method, $url, $consumerKey, $consumerSecret,
   if ($optionParams) {
     $params += $optionParams
   }
-  $signatureBaseString = GetSignatureBaseString $method $url $params
+  $allParams = $params.Clone()
+  if ($bodyParams) {
+    $allParams += $bodyParams
+  }
+  $signatureBaseString = GetSignatureBaseString $method $url $allParams
   $signature = GetSignature $signatureBaseString $consumerSecret $tokenSecret
   $authorizationHeader = GetAuthorizationHeader $params $signature
 
@@ -120,7 +124,7 @@ function InvokeOauthApi($method, $url, $consumerKey, $consumerSecret,
     if ($method -eq 'POST') {
       $headers['Content-Type'] = 'application/x-www-form-urlencoded'
     }
-    return Invoke-RestMethod $url -Method $method -Headers $headers -Body $body
+    return Invoke-RestMethod $url -Method $method -Headers $headers -Body $bodyParams
   } catch {
     PrintWebException $_
     throw $_
@@ -207,12 +211,12 @@ class Oauth1aLocalClient {
   [object] Invoke($method, $url) {
     return $this.Invoke($method, $url, $null)
   }
-  [object] Invoke($method, $url, $optionParams, $body) {
+  [object] Invoke($method, $url, $optionParams, $bodyParams) {
     if (!$this.accessToken -or !$this.accessTokenSecret) {
       $this.InvokeOauthFlow()
     }
     return InvokeOauthApi $method $url $this.consumerKey $this.consumerSecret `
-      -token $this.accessToken -tokenSecret $this.accessTokenSecret -optionParams $optionParams -body $body
+      -token $this.accessToken -tokenSecret $this.accessTokenSecret -optionParams $optionParams -bodyParams $bodyParams
   }
 
   Save($path) {

@@ -12,15 +12,15 @@ $DebugPreference = 'SilentlyContinue'
 # 事前に、$consumerKey, $consumerSecret, $requestUrl, $authUrl, $accessUrl を設定しておく。
 $DebugPreference = 'Continue'
 
-# リクエストトークン
+# １．リクエストトークン
 ParseOauthResponse(InvokeOauthApi 'POST' $requestUrl $consumerKey $consumerSecret -callback 'oob') | Tee-Object -Variable res
 #=> oauth_token=xxx&oauth_token_secret=xxx&oauth_callback_confirmed=true
 
-# ユーザ認可
+# ２．ユーザ認可
 InvokeUserAuthorization $res.oauth_token
 $verifier = Read-Host "完了画面に表示されたトークンを入力してください。"
 
-# アクセストークン
+# ３．アクセストークン
 ParseOauthResponse(InvokeOauthApi 'POST' $accessUrl $consumerKey $consumerSecret -token $res.oauth_token -tokenSecret $res.oauth_token_secret -verifier $verifier) | Tee-Object -Variable res
 #=> oauth_token=xxx&oauth_token_secret=xxx
 
@@ -38,7 +38,7 @@ $data = @{
 SaveSecretObject $dataPath $data
 LoadSecretObject $dataPath
 
-# リソースAPI
+# ４．リソースAPI
 InvokeOauthApi 'GET' 'https://api.zaim.net/v2/home/user/verify' $consumerKey $consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret | ConvertTo-Json -Depth 100
 InvokeOauthApi 'GET' 'https://api.zaim.net/v2/home/account' $consumerKey $consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret -optionParams @{ mapping = 1 } | ConvertTo-Json -Depth 100
 InvokeOauthApi 'GET' 'https://api.zaim.net/v2/home/category' $consumerKey $consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret -optionParams @{ mapping = 1 } | ConvertTo-Json -Depth 100
@@ -61,6 +61,8 @@ $params = @{
   # NG記号 !'()*
 }
 InvokeOauthApi 'POST' 'https://api.zaim.net/v2/home/money/income' $consumerKey $consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret -optionParams $params -body $params | ConvertTo-Json -Depth 100
+
+
 
 # クラス版
 $dataPath = Join-Path $home "PsOauth1aLocalClient_Zaim.dat"
