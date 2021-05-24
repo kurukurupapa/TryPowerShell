@@ -75,14 +75,15 @@ function PrintWebException($e) {
 }
 
 # OAuth1.0aでAPI呼び出しを実行
-# 引数の $callback, $token, $tokenSecret, $verifier, $optionParams, $bodyParams は、必要に応じて設定する。
+# 引数の $callback, $token, $tokenSecret, $verifier, $optionParams, $bodyParams, $queryParams は、必要に応じて設定する。
 # $optionParamsの値は、Authorizationヘッダーやoauth_signatureの計算に含める。
 # $bodyParamsの値は、GETパラメータまたはPOSTデータとなる。
 # リクエストトークン取得時は、$token, $tokenSecret, $verifier なし、必要に応じて $callback を設定する。
 # アクセストークン取得時は、$token, $tokenSecret にリクエストトークン取得結果を設定し、$verifier にユーザ認証結果を設定する。
 # リソースAPI呼び出し時は、$token, $tokenSecret にアクセストークン取得結果を設定し、呼び出すAPIにGET/POSTパラメータを付加するときは、optionParams を設定する。
+# $queryParams は、基本使用しないが、リクエストメソッドによらず、URLにクエリ文字列を設定したいときに使用する。
 function InvokeOauthApi($method, $url, $consumerKey, $consumerSecret,
-  $callback=$null, $token='', $tokenSecret='', $verifier=$null, $optionParams=@{}, $bodyParams=$null,
+  $callback=$null, $token='', $tokenSecret='', $verifier=$null, $optionParams=@{}, $bodyParams=$null, $queryParams=$null,
   $signatureMethod='HMAC-SHA1') {
 
   # oauth_nonceは、一意な値であればよいので、とりあえずタイムスタンプから作成する。
@@ -112,9 +113,23 @@ function InvokeOauthApi($method, $url, $consumerKey, $consumerSecret,
   if ($bodyParams) {
     $allParams += $bodyParams
   }
+  if ($queryParams) {
+    $allParams += $queryParams
+  }
   $signatureBaseString = GetSignatureBaseString $method $url $allParams
   $signature = GetSignature $signatureBaseString $consumerSecret $tokenSecret
   $authorizationHeader = GetAuthorizationHeader $params $signature
+
+  if ($queryParams) {
+    $arr = $queryParams.GetEnumerator() | sort Name | %{
+      [System.Web.HttpUtility]::UrlEncode($_.Name) + '=' + [System.Web.HttpUtility]::UrlEncode($_.Value)
+    }
+    $sep = '?'
+    if ($url -match "\?") {
+      $sep = '&'
+    }
+    $url += $sep + ($arr -join '&')
+  }
 
   try {
     $headers = @{
@@ -130,9 +145,11 @@ function InvokeOauthApi($method, $url, $consumerKey, $consumerSecret,
     throw $_
   }
 }
+# InvokeOauthApi 'DELETE' "https://kurukurupapap.com/oauth1a" "consumerKey" "consumerSecret" "callback" -queryParams @{q1=1;q2="abc";"symbol!#"="$%< >+*"}
+# InvokeOauthApi 'DELETE' "https://kurukurupapap.com/oauth1a?a=1" "consumerKey" "consumerSecret" "callback" -queryParams @{q1=1;q2="abc";"symbol!#"="$%< >+*"}
 
 # ユーザ認可URLの実行（ブラウザが開く）
-function InvokeUserAuthorization($token) {
+function InvokeUserAuthorization($authUrl, $token) {
   $url = $authUrl + "?oauth_token=" + [System.Web.HttpUtility]::UrlEncode($token)
   Write-Verbose $url
   Start-Process $url
@@ -154,7 +171,7 @@ function InvokeOauthFlow($consumerKey, $consumerSecret, $requestUrl, $authUrl, $
   # [OAuth Core 1.0a](https://oauth.net/core/1.0a/#auth_step2) 6.2. Obtaining User Authorization
   # [GET oauth/authorize | Twitter Developer](https://developer.twitter.com/en/docs/authentication/api-reference/authorize)
   Write-Verbose "ユーザ認証 開始"
-  InvokeUserAuthorization $res.oauth_token
+  InvokeUserAuthorization $authUrl $res.oauth_token
   $verifier = Read-Host "完了画面に表示されたトークンを入力してください。"
 
   # ３．アクセストークン取得
@@ -209,14 +226,18 @@ class Oauth1aLocalClient {
   }
 
   [object] Invoke($method, $url) {
-    return $this.Invoke($method, $url, $null)
+    return $this.Invoke($method, $url, $null, $null, $null)
   }
   [object] Invoke($method, $url, $optionParams, $bodyParams) {
+    return $this.Invoke($method, $url, $optionParams, $bodyParams, $null)
+  }
+  [object] Invoke($method, $url, $optionParams, $bodyParams, $queryParams) {
     if (!$this.accessToken -or !$this.accessTokenSecret) {
       $this.InvokeOauthFlow()
     }
     return InvokeOauthApi $method $url $this.consumerKey $this.consumerSecret `
-      -token $this.accessToken -tokenSecret $this.accessTokenSecret -optionParams $optionParams -bodyParams $bodyParams
+      -token $this.accessToken -tokenSecret $this.accessTokenSecret `
+      -optionParams $optionParams -bodyParams $bodyParams -queryParams $queryParams
   }
 
   Save($path) {
