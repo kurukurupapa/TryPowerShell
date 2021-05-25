@@ -1,7 +1,6 @@
 # PowerShell標準機能で OAuth 1.0a クライアントを作成してみる
 # Zaim API で動作確認する。
-# ZaimAPIへのアプリ登録では、サービス種類を「クライアントアプリ」、アクセスレベルを読み込みのみにした。
-# でも、サービス種類を「ブラウザアプリ」にしても動作した。
+# ZaimAPIへのアプリ登録では、サービス種類を「クライアントアプリ」、アクセスレベルを読み込みのみにした。でも、サービス種類を「ブラウザアプリ」にしても動作した。
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -13,42 +12,35 @@ $DebugPreference = 'SilentlyContinue'
 $DebugPreference = 'Continue'
 
 # １．リクエストトークン
-ParseOauthResponse(InvokeOauthApi 'POST' $requestUrl $consumerKey $consumerSecret -callback 'oob') | Tee-Object -Variable res
+InvokeRequestToken 'POST' $data.requestUrl $data.consumerKey $data.consumerSecret -callback 'oob' | Tee-Object -Variable res
 #=> oauth_token=xxx&oauth_token_secret=xxx&oauth_callback_confirmed=true
 
 # ２．ユーザ認可
-InvokeUserAuthorization $res.oauth_token
+InvokeUserAuthorization $data.authUrl $res.oauth_token
 $verifier = Read-Host "完了画面に表示されたトークンを入力してください。"
 
 # ３．アクセストークン
-ParseOauthResponse(InvokeOauthApi 'POST' $accessUrl $consumerKey $consumerSecret -token $res.oauth_token -tokenSecret $res.oauth_token_secret -verifier $verifier) | Tee-Object -Variable res
+InvokeAccessToken 'POST' $data.accessUrl $data.consumerKey $data.consumerSecret -token $res.oauth_token -tokenSecret $res.oauth_token_secret -verifier $verifier | Tee-Object -Variable res
 #=> oauth_token=xxx&oauth_token_secret=xxx
+$data.accessToken = $res.oauth_token
+$data.accessTokenSecret = $res.oauth_token_secret
 
 # 保存
-$dataPath = Join-Path $home "PsOauth1aLocalClient_Zaim.dat"
-$data = @{
-  consumerKey = $consumerKey
-  consumerSecret = $consumerSecret
-  requestUrl = $requestUrl
-  authUrl = $authUrl
-  accessUrl = $accessUrl
-  accessToken = $res.oauth_token
-  accessTokenSecret = $res.oauth_token_secret
-}
+$dataPath = Join-Path $home "PsOauth1aClient_Zaim.dat"
 SaveSecretObject $dataPath $data
-LoadSecretObject $dataPath
+LoadSecretObject $dataPath | Tee-Object -Variable data
 
 # ４．リソースAPI
-InvokeOauthApi 'GET' 'https://api.zaim.net/v2/home/user/verify' $consumerKey $consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret | ConvertTo-Json -Depth 100
-InvokeOauthApi 'GET' 'https://api.zaim.net/v2/home/account' $consumerKey $consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret -optionParams @{ mapping = 1 } | ConvertTo-Json -Depth 100
-InvokeOauthApi 'GET' 'https://api.zaim.net/v2/home/category' $consumerKey $consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret -optionParams @{ mapping = 1 } | ConvertTo-Json -Depth 100
-InvokeOauthApi 'GET' 'https://api.zaim.net/v2/home/genre' $consumerKey $consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret -optionParams @{ mapping = 1 } | ConvertTo-Json -Depth 100
+InvokeOauthApi 'GET' 'https://api.zaim.net/v2/home/user/verify' $data.consumerKey $data.consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret | ConvertTo-Json
+InvokeOauthApi 'GET' 'https://api.zaim.net/v2/home/account' $data.consumerKey $data.consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret -optionParams @{ mapping = 1 } | ConvertTo-Json
+InvokeOauthApi 'GET' 'https://api.zaim.net/v2/home/category' $data.consumerKey $data.consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret -optionParams @{ mapping = 1 } | ConvertTo-Json
+InvokeOauthApi 'GET' 'https://api.zaim.net/v2/home/genre' $data.consumerKey $data.consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret -optionParams @{ mapping = 1 } | ConvertTo-Json
 $params = @{
   mapping = 1
   start_date = (Get-Date).AddDays(-7).ToString("yyyy-MM-dd")
   end_date = Get-Date -Format "yyyy-MM-dd"
 }
-InvokeOauthApi 'GET' 'https://api.zaim.net/v2/home/money' $consumerKey $consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret $params -body $params | ConvertTo-Json -Depth 100
+InvokeOauthApi 'GET' 'https://api.zaim.net/v2/home/money' $data.consumerKey $data.consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret $params -body $params | ConvertTo-Json
 $params = @{
   mapping = 1
   category_id = 19
@@ -60,32 +52,35 @@ $params = @{
   # comment = "OAuth 1.0a Client Test !`"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
   # NG記号 !'()*
 }
-InvokeOauthApi 'POST' 'https://api.zaim.net/v2/home/money/income' $consumerKey $consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret -optionParams $params -body $params | ConvertTo-Json -Depth 100
+InvokeOauthApi 'POST' 'https://api.zaim.net/v2/home/money/income' $data.consumerKey $data.consumerSecret -token $data.accessToken -tokenSecret $data.accessTokenSecret -optionParams $params -body $params | ConvertTo-Json
 
 
 
 # クラス版
-$dataPath = Join-Path $home "PsOauth1aLocalClient_Zaim.dat"
+$dataPath = Join-Path $home "PsOauth1aClient_Zaim.dat"
 if (Test-Path $dataPath) {
-  $client = New-Object Oauth1aLocalClient
+  $client = New-Object Oauth1aClient
   $client.Load($dataPath)
 } else {
   # 事前に $consumerKey, $consumerSecret, $requestUrl, $authUrl, $accessUrl, $callbackUrl を設定しておく
-  $client = New-Object Oauth1aLocalClient($consumerKey, $consumerSecret, $requestUrl, $authUrl, $accessUrl)
-  $client.InvokeOauthFlow()
+  $client = New-Object Oauth1aClient($data.consumerKey, $data.consumerSecret, $data.requestUrl, $data.authUrl, $data.accessUrl)
+  $client.InvokeRequestToken('POST', 'oob')
+  $client.InvokeUserAuthorization()
+  $client.InvokeAccessToken('POST')
   $client.Save($dataPath)
 }
 
-$client.Invoke('GET', 'https://api.zaim.net/v2/home/user/verify') | ConvertTo-Json -Depth 100
-$client.Invoke('GET', 'https://api.zaim.net/v2/home/account', @{ mapping = 1 }) | ConvertTo-Json -Depth 100
-$client.Invoke('GET', 'https://api.zaim.net/v2/home/category', @{ mapping = 1 }) | ConvertTo-Json -Depth 100
-$client.Invoke('GET', 'https://api.zaim.net/v2/home/genre', @{ mapping = 1 }) | ConvertTo-Json -Depth 100
+$client.Invoke('GET', 'https://api.zaim.net/v2/home/user/verify') | ConvertTo-Json
+$client.Invoke('GET', 'https://api.zaim.net/v2/home/account', @{body=@{mapping=1}}) | ConvertTo-Json
+$client.Invoke('GET', 'https://api.zaim.net/v2/home/category', @{body=@{mapping=1}}) | ConvertTo-Json
+$client.Invoke('GET', 'https://api.zaim.net/v2/home/genre', @{body=@{mapping=1}}) | ConvertTo-Json
 $params = @{
   mapping = 1
   start_date = (Get-Date).AddDays(-7).ToString("yyyy-MM-dd")
   end_date = Get-Date -Format "yyyy-MM-dd"
 }
-$client.Invoke('GET', 'https://api.zaim.net/v2/home/money', $params, $params) | ConvertTo-Json -Depth 100
+$client.Invoke('GET', 'https://api.zaim.net/v2/home/money', @{body=$params}) | ConvertTo-Json
+$client.Invoke('GET', 'https://api.zaim.net/v2/home/money', $null, $params, $null) | ConvertTo-Json
 $params = @{
   mapping = 1
   category_id = 19
@@ -97,4 +92,4 @@ $params = @{
   # comment = "OAuth 1.0a Client Test !`"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
   # NG記号 !'()*
 }
-$client.Invoke('POST', 'https://api.zaim.net/v2/home/money/income', $params, $params) | ConvertTo-Json -Depth 100
+$client.Invoke('POST', 'https://api.zaim.net/v2/home/money/income', @{body=$params}) | ConvertTo-Json
