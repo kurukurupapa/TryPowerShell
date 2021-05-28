@@ -6,27 +6,28 @@ $ErrorActionPreference = 'Stop'
 $VerbosePreference = 'Continue'
 $DebugPreference = 'SilentlyContinue'
 
-
 # OAuthフローを1ステップずつ確認
 # 事前に、$consumerKey, $consumerSecret, $requestUrl, $authUrl, $accessUrl を設定しておく。
 $DebugPreference = 'Continue'
+$dataPath = Join-Path $home "PsOauth1aClient_Hatena.dat"
+if (Test-Path $dataPath) {
+  LoadSecretObject $dataPath | Tee-Object -Variable data
+}
 
 # １．リクエストトークン
 $params = @{ scope = "read_public,write_public,read_private" }
-ParseOauthResponse(InvokeOauthApi 'POST' $data.requestUrl $data.consumerKey $data.consumerSecret -callback 'oob' -optionParams $params) | Tee-Object -Variable res
+InvokeRequestToken 'POST' $data.requestUrl $data.consumerKey $data.consumerSecret -callback 'oob' -authParams $params | Tee-Object -Variable res
 
 # ２．ユーザ認可
-InvokeUserAuthorization $data.authUrl $res.oauth_token
-$verifier = Read-Host "完了画面に表示されたトークンを入力してください。"
-# ※verifierを貼り付けたときに、時々、文字が欠けるので注意。
+$verifier = InvokeUserAuthorization $data.authUrl $res.oauth_token -dialog -message "完了画面に表示されたトークンを入力してください。"
 
 # ３．アクセストークン
-ParseOauthResponse(InvokeOauthApi 'POST' $data.accessUrl $data.consumerKey $data.consumerSecret -token $res.oauth_token -tokenSecret $res.oauth_token_secret -verifier $verifier) | Tee-Object -Variable res
+InvokeAccessToken 'POST' $data.accessUrl $data.consumerKey $data.consumerSecret -token $res.oauth_token -tokenSecret $res.oauth_token_secret -verifier $verifier | Tee-Object -Variable res
 $data.accessToken = $res.oauth_token
 $data.accessTokenSecret = $res.oauth_token_secret
 
 # 保存
-$dataPath = Join-Path $home "PsOauth1aLocalClient_Hatena.dat"
+$dataPath = Join-Path $home "PsOauth1aClient_Hatena.dat"
 SaveSecretObject $dataPath $data
 LoadSecretObject $dataPath | Tee-Object -Variable data
 
@@ -71,14 +72,18 @@ InvokeOauthApi 'GET' "https://blog.hatena.ne.jp/$hatenaId/$blogId/atom/entry" $d
 
 
 # クラス版
-$dataPath = Join-Path $home "PsOauth1aLocalClient_Hatena.dat"
+$dataPath = Join-Path $home "PsOauth1aClient_Hatena.dat"
 if (Test-Path $dataPath) {
-  $client = New-Object Oauth1aLocalClient
+  $client = New-Object Oauth1aClient
   $client.Load($dataPath)
 } else {
+  # TODO
   # 事前に $consumerKey, $consumerSecret, $requestUrl, $authUrl, $accessUrl, $callbackUrl を設定しておく
-  $client = New-Object Oauth1aLocalClient($data.consumerKey, $data.consumerSecret, $data.requestUrl, $data.authUrl, $data.accessUrl)
-  $client.InvokeOauthFlow()
+  $params = @{ scope = "read_public,write_public,read_private" }
+  $client = New-Object Oauth1aClient($data.consumerKey, $data.consumerSecret, $data.requestUrl, $data.authUrl, $data.accessUrl)
+  $client.InvokeRequestToken('POST', 'oob', $params, $null)
+  $client.InvokeUserAuthorization($true)
+  $client.InvokeAccessToken('POST')
   $client.Save($dataPath)
 }
 
@@ -98,12 +103,3 @@ $client.Invoke('POST', "https://bookmark.hatenaapis.com/rest/1/my/bookmark", $nu
 $client.Invoke('GET', "https://bookmark.hatenaapis.com/rest/1/my/bookmark", $null, $params1)
 $client.Invoke('DELETE', "https://bookmark.hatenaapis.com/rest/1/my/bookmark", $null, $null, $params1)
 $client.Invoke('GET', "https://bookmark.hatenaapis.com/rest/1/my/tags") | ConvertTo-Json
-
-# はてなブログAtomPub
-$hatenaId = "kurukuru-papa"
-$blogId = "kurukurupapa.hatenablog.com"
-$client.Invoke('GET', "https://blog.hatena.ne.jp/$hatenaId/$blogId/atom")
-#=> <p class="error-box">oauth_problem=additional_authorization_required</p>
-$client.Invoke('GET', "https://blog.hatena.ne.jp/$hatenaId/$blogId/atom/entry")
-#=> <p class="error-box">oauth_problem=additional_authorization_required</p>
-# →追加のスコープが必要な模様。気が向いたら試してみる。

@@ -165,11 +165,50 @@ function InvokeRequestToken($method, $requestUrl, $consumerKey, $consumerSecret,
 # ユーザ認可URLの実行（ブラウザが開く）
 # [OAuth Core 1.0a](https://oauth.net/core/1.0a/#auth_step2) 6.2. Obtaining User Authorization
 # [GET oauth/authorize | Twitter Developer](https://developer.twitter.com/en/docs/authentication/api-reference/authorize)
-function InvokeUserAuthorization($authUrl, $requestToken) {
+function InvokeUserAuthorization($authUrl, $requestToken, [switch]$dialog,
+  $message="完了画面に表示されたトークン、または完了画面/遷移エラー画面のURLから" +
+  " oauth_verifier の値を入力してください。") {
   Write-Verbose "ユーザ認証"
   $url = $authUrl + "?oauth_token=" + [System.Web.HttpUtility]::UrlEncode($requestToken)
   Write-Verbose $url
   Start-Process $url
+
+  $verifier = $null
+  if (!$dialog) {
+    $verifier = Read-Host $message
+    # ※verifierを貼り付けたときに、時々、文字が欠けるので注意。
+  } else {
+    $verifier = ShowInputDialog $message
+  }
+  return $verifier
+}
+
+function ShowInputDialog($message="Verifierを入力してください。", $title="PsOauth1aClient") {
+  Add-Type -AssemblyName System.Windows.Forms
+  $form = New-Object System.Windows.Forms.Form -Property @{
+    Text = $title
+    Width = 300
+    Height = 200
+  }
+  $form.Controls.Add(($textBox = New-Object System.Windows.Forms.TextBox -Property @{
+    AutoSize = $false
+    Dock = [System.Windows.Forms.DockStyle]::Fill
+  }))
+  $form.Controls.Add((New-Object System.Windows.Forms.Label -Property @{
+    Text = $message
+    Dock = [System.Windows.Forms.DockStyle]::Top
+  }))
+  $form.Controls.Add(($button = New-Object System.Windows.Forms.Button -Property @{
+    Text = "OK"
+    Dock = [System.Windows.Forms.DockStyle]::Bottom
+  }))
+  $button.Add_Click({
+    $form.Tag = $textBox.Text
+    $form.Close()
+  })
+  $form.ShowDialog() | Out-Null
+  $form.Dispose()
+  return $form.Tag
 }
 
 # アクセストークン取得
@@ -187,12 +226,15 @@ function InvokeAccessToken($method, $accessUrl, $consumerKey, $consumerSecret,
 function SaveSecretObject($path, $obj) {
   $jsonStr = ConvertTo-Json $obj -Compress
   ConvertTo-SecureString $jsonStr -AsPlainText -Force | ConvertFrom-SecureString | Set-Content $path
+  Write-Verbose "Saved $path"
 }
 function LoadSecretObject($path) {
   $ss = Get-Content $path | ConvertTo-SecureString
   $jsonStr = [System.Runtime.InteropServices.Marshal]::PtrToStringBSTR(
     [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($ss))
-  return ConvertFrom-Json $jsonStr
+  $jsonObj = ConvertFrom-Json $jsonStr
+  Write-Verbose "Loaded $path"
+  return $jsonObj
 }
 
 # クラス化
@@ -222,9 +264,8 @@ class Oauth1aClient {
   InvokeRequestToken($method, $callback) {
     $this.InvokeRequestToken($method, $callback, $null, $null, $null)
   }
-  InvokeRequestToken($method, $callback, $optionParams) {
-    $this.InvokeRequestToken($method, $callback,
-      $optionParams["auth"], $optionParams["body"], $optionParams["query"])
+  InvokeRequestToken($method, $callback, $authParams, $bodyParams) {
+    $this.InvokeRequestToken($method, $callback, $authParams, $bodyParams, $null)
   }
   InvokeRequestToken($method, $callback, $authParams, $bodyParams, $queryParams) {
     $res = InvokeRequestToken $method $this.requestUrl $this.consumerKey $this.consumerSecret `
@@ -233,11 +274,8 @@ class Oauth1aClient {
     $this.requestTokenSecret = $res.oauth_token_secret
   }
 
-  InvokeUserAuthorization() {
-    InvokeUserAuthorization $this.authUrl $this.requestToken
-    $this.verifier = Read-Host ("完了画面に表示されたトークン、" +
-      "または完了画面/遷移エラー画面のURLから oauth_verifier の値を入力してください。")
-    # ※verifierを貼り付けたときに、時々、文字が欠けるので注意。
+  InvokeUserAuthorization($dialog) {
+    $this.verifier = InvokeUserAuthorization $this.authUrl $this.requestToken -dialog
   }
 
   InvokeAccessToken($method) {
@@ -254,10 +292,10 @@ class Oauth1aClient {
     return $this.Invoke($method, $url,
       $optionParams["auth"], $optionParams["body"], $optionParams["query"])
   }
+  [object] Invoke($method, $url, $authParams, $bodyParams) {
+    return $this.Invoke($method, $url, $authParams, $bodyParams, $null)
+  }
   [object] Invoke($method, $url, $authParams, $bodyParams, $queryParams) {
-    if (!$this.accessToken -or !$this.accessTokenSecret) {
-      $this.InvokeOauthFlow()
-    }
     return InvokeOauthApi $method $url $this.consumerKey $this.consumerSecret `
       -token $this.accessToken -tokenSecret $this.accessTokenSecret `
       -authParams $authParams -bodyParams $bodyParams -queryParams $queryParams
