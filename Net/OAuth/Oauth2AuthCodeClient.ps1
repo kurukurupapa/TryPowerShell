@@ -1,27 +1,35 @@
-# PowerShell標準機能で OAuth 2.0 クライアントを作成してみる
-# OAuth 2.0 認可コードグラントタイプ
-# 参考
-# [OAuth 2.0 ? OAuth](https://oauth.net/2/)
-# [The OAuth 2.0 Authorization Framework](https://openid-foundation-japan.github.io/rfc6749.ja.html)
+<#
+.SYNOPSIS
+  PowerShell標準機能で OAuth 2.0 クライアントを作成（OAuth 2.0 認可コードグラントタイプ）
+.DESCRIPTION
+  参考
+  [OAuth 2.0 ? OAuth](https://oauth.net/2/)
+  [The OAuth 2.0 Authorization Framework](https://openid-foundation-japan.github.io/rfc6749.ja.html)
+#>
 
 . (Join-Path $PSScriptRoot "Oauth2Util.ps1")
-
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $VerbosePreference = 'Continue'
 $DebugPreference = 'SilentlyContinue'
 
-function Oauth2AuthCode_InvokeUserAuth($url, $clientId, $redirectUri, $scope, $state,
-  $otherParams, $message, $dialog) {
+<#
+.SYNOPSIS
+  OAuth 2.0 認可コードグラントタイプにおける認可リクエスト
+.INPUTS
+  $optionParams - 追加パラメータの連想配列
+    例：@{redirect_uri="xxx"; scope="xxx"; state="xxx"}
+  $dialog - ダイアログボックスでユーザ入力を受け付ける場合$true。デフォルトではコンソールから読み込む。
+.OUTPUTS
+  認可コードの文字列
+#>
+function Oauth2AuthCode_InvokeUserAuth($url, $clientId, $optionParams, $message=$OAUTH2_CODE_MSG, $dialog) {
   $params = @{
     response_type = 'code'
     client_id = $clientId
   }
-  if ($redirectUri) { $params['redirect_uri'] = $redirectUri }
-  if ($scope) { $params['scope'] = $scope }
-  if ($state) { $params['state'] = $state }
-  if ($otherParams) { $params += $otherParams }
-  $arr = $params.GetEnumerator() | sort Name | %{
+  if ($optionParams) { $params += $optionParams }
+  $arr = $params.GetEnumerator() | Sort-Object Name | ForEach-Object {
     [System.Web.HttpUtility]::UrlEncode($_.Name) + '=' + [System.Web.HttpUtility]::UrlEncode($_.Value)
   }
   $url += '?' + ($arr -join '&')
@@ -30,14 +38,21 @@ function Oauth2AuthCode_InvokeUserAuth($url, $clientId, $redirectUri, $scope, $s
   return Oauth2_ReadUserCode $message $dialog
 }
 
-function Oauth2AuthCode_InvokeAccessToken($url, $authCode, $redirectUri, $clientId, $otherParams) {
+<#
+.SYNOPSIS
+  OAuth 2.0 認可コードグラントタイプにおけるアクセストークンリクエスト
+.INPUTS
+  $optionParams - 追加パラメータの連想配列
+    例：@{redirect_uri="xxx"; client_id="xxx"}
+.OUTPUTS
+  アクセストークンの文字列
+#>
+function Oauth2AuthCode_InvokeAccessToken($url, $authCode, $optionParams) {
   $params = @{
     grant_type = 'authorization_code'
     code = $authCode
   }
-  if ($redirectUri) { $params['redirect_uri'] = $redirectUri }
-  if ($clientId) { $params['client_id'] = $clientId }
-  if ($otherParams) { $params += $otherParams }
+  if ($optionParams) { $params += $optionParams }
   try {
     return Invoke-RestMethod $url -Method 'POST' -Body $params
   } catch {
@@ -46,13 +61,21 @@ function Oauth2AuthCode_InvokeAccessToken($url, $authCode, $redirectUri, $client
   }
 }
 
-function Oauth2AuthCode_InvokeRefreshToken($url, $refreshToken, $scope, $otherParams) {
+<#
+.SYNOPSIS
+  OAuth 2.0 認可コードグラントタイプにおけるリフレッシュトークンリクエスト
+.INPUTS
+  $optionParams - 追加パラメータの連想配列
+    例：@{scope="xxx"}
+.OUTPUTS
+  アクセストークンの文字列
+#>
+function Oauth2AuthCode_InvokeRefreshToken($url, $refreshToken, $optionParams) {
   $params = @{
     grant_type = "refresh_token"
     refresh_token = $refreshToken
   }
-  if ($scope) { $params['scope'] = $scope }
-  if ($otherParams) { $params += $otherParams }
+  if ($optionParams) { $params += $optionParams }
   try {
     return Invoke-RestMethod $url -Method 'POST' -Body $params
   } catch {
@@ -61,18 +84,26 @@ function Oauth2AuthCode_InvokeRefreshToken($url, $refreshToken, $scope, $otherPa
   }
 }
 
-function Oauth2AuthCode_InvokeApi($method, $url, $accessToken, $otherParams) {
+<#
+.SYNOPSIS
+  OAuth 2.0 認可コードグラントタイプにおけるリソースAPIリクエスト
+#>
+function Oauth2AuthCode_InvokeApi($method, $url, $accessToken, $optionParams) {
   $headers = @{
     'Authorization' = "Bearer $accessToken"
   }
   try {
-    return Invoke-RestMethod $url -Method $method -Headers $headers -Body $otherParams
+    return Invoke-RestMethod $url -Method $method -Headers $headers -Body $optionParams
   } catch {
     PrintWebException $_
     throw $_
   }
 }
 
+<#
+.SYNOPSIS
+  OAuth 2.0 認可コードグラントタイプクラス
+#>
 class Oauth2AuthCodeClient {
   $clientId
   $clientSecret
@@ -120,8 +151,7 @@ class Oauth2AuthCodeClient {
 
   Load($path) {
     $data = LoadSecretObject $path
-    $data.psobject.properties | %{
-      # $this.($_.Name) = $_.Value
+    $data.psobject.properties | ForEach-Object {
       Add-Member -InputObject $this -MemberType NoteProperty -Name $_.Name -Value $_.Value -Force
     }
   }

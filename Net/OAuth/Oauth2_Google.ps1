@@ -1,13 +1,15 @@
-# PowerShell標準機能で OAuth 2.0 クライアントを作成してみる。
-# Google API で動作確認する。
-# 参考
-# [OAuth 2.0 for Mobile & Desktop Apps ?|? Google Identity Platform](https://developers.google.com/identity/protocols/oauth2/native-app)
-# 前提
-# Google Cloud Platform で OAuth 2.0 クライアントを登録し、クライアントID、クライアントシークレットを払い出しておく。
-# [ホーム ? Test01 ? Google Cloud Platform](https://console.cloud.google.com/home/dashboard?project=test01-e645b)
+<#
+.SYNOPSIS
+  PowerShell標準機能で OAuth 2.0 クライアントを作成（Google API）
+.DESCRIPTION
+  参考
+  [OAuth 2.0 for Mobile & Desktop Apps ?|? Google Identity Platform](https://developers.google.com/identity/protocols/oauth2/native-app)
+  前提
+  Google Cloud Platform で OAuth 2.0 クライアントを登録し、クライアントID、クライアントシークレットを払い出しておく。
+  [ホーム ? Test01 ? Google Cloud Platform](https://console.cloud.google.com/home/dashboard?project=test01-e645b)
+#>
 
 . (Join-Path $PSScriptRoot "Oauth2AuthCodeClient.ps1")
-
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $VerbosePreference = 'Continue'
@@ -23,12 +25,15 @@ if (Test-Path $dataPath) {
 }
 
 # １．認可リクエスト
-$authCode = Oauth2AuthCode_InvokeUserAuth $data.authUrl $data.clientId -redirectUri "urn:ietf:wg:oauth:2.0:oob" `
-  -scope "email profile https://www.googleapis.com/auth/drive.metadata.readonly" `
-  -message $CODE_MSG -dialog $true
+$authCode = Oauth2AuthCode_InvokeUserAuth $data.authUrl $data.clientId @{
+  redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+  scope = "email profile https://www.googleapis.com/auth/drive.metadata.readonly"
+} -message $CODE_MSG -dialog $true
 
 # ２．アクセストークンリクエスト
-Oauth2AuthCode_InvokeAccessToken $data.accessUrl $authCode "urn:ietf:wg:oauth:2.0:oob" $data.clientId @{
+Oauth2AuthCode_InvokeAccessToken $data.accessUrl $authCode @{
+  redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+  client_id = $data.clientId
   client_secret = $data.clientSecret
 } | Tee-Object -Variable res
 Oauth2_AddResponse $data $res | Tee-Object -Variable data
@@ -41,7 +46,7 @@ LoadSecretObject $dataPath | Tee-Object -Variable data
 Oauth2AuthCode_InvokeApi 'GET' "https://www.googleapis.com/drive/v2/files" $data.accessToken | ConvertTo-Json
 
 # ４．リフレッシュトークンリクエスト
-Oauth2AuthCode_InvokeRefreshToken $data.accessUrl $data.refreshToken -otherParams @{
+Oauth2AuthCode_InvokeRefreshToken $data.accessUrl $data.refreshToken @{
   client_id = $data.clientId
   client_secret = $data.clientSecret
 } | Tee-Object -Variable res
