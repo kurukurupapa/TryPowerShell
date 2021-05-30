@@ -39,6 +39,36 @@ function ShowInputDialog($message, $title) {
   return $form.Tag
 }
 
+<#
+.SYNOPSIS
+  HTTPボディのハッシュを Content-Type に従って変換
+.OUTPUTS
+  Content-Type が application/json の場合に、byte[]を返却したいが、PowerShellのfunctionの仕様で、Object[]に変換されてしまうため、ハッシュで返却。
+#>
+function ConvToWrappedBody($params, $contentType='application/x-www-form-urlencoded') {
+  $body = $null
+  if ($contentType -eq 'application/x-www-form-urlencoded') {
+    $body = @{value=$params}
+  } elseif ($contentType -match 'application/json') {
+    # $body = $params | ConvertTo-Json -Depth 100
+    $body = ConvToWrappedJsonBody $params
+  } else {
+    throw "ERROR: invalid contentType, $contentType"
+  }
+  return $body
+}
+
+<#
+.SYNOPSIS
+  HTTPボディのハッシュをJSON文字列のバイト配列に変換
+.OUTPUTS
+  byte[]を返却したいが、PowerShellのfunctionの仕様で、Object[]に変換されてしまうため、ハッシュで返却。
+#>
+function ConvToWrappedJsonBody($params) {
+  $jsonStr = $params | ConvertTo-Json -Depth 100
+  return @{value=[System.Text.Encoding]::UTF8.GetBytes($jsonStr)}
+}
+
 # HTTPアクセスエラー時のエラー情報を表示
 function PrintWebException($e) {
   try {

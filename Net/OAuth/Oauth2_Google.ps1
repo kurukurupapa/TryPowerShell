@@ -4,6 +4,7 @@
 .DESCRIPTION
   参考
   [OAuth 2.0 for Mobile & Desktop Apps ?|? Google Identity Platform](https://developers.google.com/identity/protocols/oauth2/native-app)
+  [GoogleAPIのOAuth2.0スコープ ?|? Google Identity Platform ?|? Google Developers](https://developers.google.com/identity/protocols/oauth2/scopes)
   前提
   Google Cloud Platform で OAuth 2.0 クライアントを登録し、クライアントID、クライアントシークレットを払い出しておく。
   [ホーム ? Test01 ? Google Cloud Platform](https://console.cloud.google.com/home/dashboard?project=test01-e645b)
@@ -25,6 +26,7 @@ if (Test-Path $dataPath) {
 }
 
 # １．認可リクエスト
+# stateパラメータを設定することが推奨されるが今回は省略。
 $authCode = Oauth2AuthCode_InvokeUserAuth $data.authUrl $data.clientId @{
   redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
   scope = "email profile https://www.googleapis.com/auth/drive.metadata.readonly"

@@ -24,6 +24,7 @@ $DebugPreference = 'SilentlyContinue'
   認可コードの文字列
 #>
 function Oauth2AuthCode_InvokeUserAuth($url, $clientId, $optionParams, $message=$OAUTH2_CODE_MSG, $dialog) {
+  Write-Verbose "認可リクエスト"
   $params = @{
     response_type = 'code'
     client_id = $clientId
@@ -44,17 +45,25 @@ function Oauth2AuthCode_InvokeUserAuth($url, $clientId, $optionParams, $message=
 .INPUTS
   $optionParams - 追加パラメータの連想配列
     例：@{redirect_uri="xxx"; client_id="xxx"}
+  $contentType - OAuth2.0仕様では、'application/x-www-form-urlencoded'となる。
 .OUTPUTS
   アクセストークンの文字列
 #>
-function Oauth2AuthCode_InvokeAccessToken($url, $authCode, $optionParams) {
+function Oauth2AuthCode_InvokeAccessToken($url, $authCode, $optionParams,
+  $contentType='application/x-www-form-urlencoded') {
+  Write-Verbose "アクセストークンリクエスト"
+  $headers = @{
+    'User-Agent' = $OAUTH2_USER_AGENT
+    'Content-Type' = $contentType
+  }
   $params = @{
     grant_type = 'authorization_code'
     code = $authCode
   }
   if ($optionParams) { $params += $optionParams }
+  $body = ConvToWrappedBody $optionParams $contentType
   try {
-    return Invoke-RestMethod $url -Method 'POST' -Body $params
+    return Invoke-RestMethod $url -Method 'POST' -Headers $headers -Body $body.value
   } catch {
     PrintWebException $_
     throw $_
@@ -71,6 +80,7 @@ function Oauth2AuthCode_InvokeAccessToken($url, $authCode, $optionParams) {
   アクセストークンの文字列
 #>
 function Oauth2AuthCode_InvokeRefreshToken($url, $refreshToken, $optionParams) {
+  Write-Verbose "リフレッシュトークンリクエスト"
   $params = @{
     grant_type = "refresh_token"
     refresh_token = $refreshToken
@@ -88,12 +98,15 @@ function Oauth2AuthCode_InvokeRefreshToken($url, $refreshToken, $optionParams) {
 .SYNOPSIS
   OAuth 2.0 認可コードグラントタイプにおけるリソースAPIリクエスト
 #>
-function Oauth2AuthCode_InvokeApi($method, $url, $accessToken, $optionParams) {
+function Oauth2AuthCode_InvokeApi($method, $url, $accessToken, $optionParams,
+  $contentType='application/x-www-form-urlencoded') {
   $headers = @{
     'Authorization' = "Bearer $accessToken"
+    'Content-Type' = $contentType
   }
+  $body = ConvToWrappedBody $optionParams $contentType
   try {
-    return Invoke-RestMethod $url -Method $method -Headers $headers -Body $optionParams
+    return Invoke-RestMethod $url -Method $method -Headers $headers -Body $body.value
   } catch {
     PrintWebException $_
     throw $_
