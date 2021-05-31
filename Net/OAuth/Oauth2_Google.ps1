@@ -20,59 +20,36 @@ $CODE_MSG = "完了画面に表示されたコードを入力してください。"
 
 # OAuthフローを1ステップずつ確認（認可コードグラントタイプ）
 # 事前に、$clientId, $clientSecret, $redirectUri, $authUrl, $accessUrl を設定しておく。
-$dataPath = Join-Path $home "PsOauth2Client_Google.dat"
-if (Test-Path $dataPath) {
-  LoadSecretObject $dataPath | Tee-Object -Variable data
+$infoPath = Join-Path $home "PsOauth2Client_Google.dat"
+if (Test-Path $infoPath) {
+  Import-OauthClientInfo $infoPath | Tee-Object -Variable info
 }
 
 # １．認可リクエスト
 # stateパラメータを設定することが推奨されるが今回は省略。
-$authCode = Oauth2AuthCode_InvokeUserAuth $data.authUrl $data.clientId @{
+$authCode = Invoke-Oauth2UserAuth "https://accounts.google.com/o/oauth2/v2/auth" $info.ClientId @{
   redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
   scope = "email profile https://www.googleapis.com/auth/drive.metadata.readonly"
-} -message $CODE_MSG -dialog $true
+} -Message $CODE_MSG -Dialog $true
 
 # ２．アクセストークンリクエスト
-Oauth2AuthCode_InvokeAccessToken $data.accessUrl $authCode @{
+Invoke-Oauth2AccessToken "https://oauth2.googleapis.com/token" $authCode @{
   redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-  client_id = $data.clientId
-  client_secret = $data.clientSecret
+  client_id = $info.ClientId
+  client_secret = $info.ClientSecret
 } | Tee-Object -Variable res
-Oauth2_AddResponse $data $res | Tee-Object -Variable data
+Add-OauthClientInfo $info $res | Tee-Object -Variable info
 
 # 保存
-SaveSecretObject $dataPath $data
-LoadSecretObject $dataPath | Tee-Object -Variable data
+Export-OauthClientInfo $infoPath $info
+Import-OauthClientInfo $infoPath | Tee-Object -Variable info
 
 # ３．リソースAPI
-Oauth2AuthCode_InvokeApi 'GET' "https://www.googleapis.com/drive/v2/files" $data.accessToken | ConvertTo-Json
+Invoke-Oauth2Api 'GET' "https://www.googleapis.com/drive/v2/files" $info.AccessToken | ConvertTo-Json
 
 # ４．リフレッシュトークンリクエスト
-Oauth2AuthCode_InvokeRefreshToken $data.accessUrl $data.refreshToken @{
-  client_id = $data.clientId
-  client_secret = $data.clientSecret
+Invoke-Oauth2RefreshToken "https://oauth2.googleapis.com/token" $info.RefreshToken @{
+  client_id = $info.ClientId
+  client_secret = $info.ClientSecret
 } | Tee-Object -Variable res
-Oauth2_AddResponse $data $res | Tee-Object -Variable data
-
-
-
-# クラス版
-if (Test-Path $dataPath) {
-  $client = New-Object Oauth2AuthCodeClient
-  $client.Load($dataPath)
-} else {
-  # 事前に、$clientId, $clientSecret, $redirectUri, $authUrl, $accessUrl を設定しておく。
-  $client = New-Object Oauth2AuthCodeClient($data.clientId, $data.clientSecret, $data.redirectUri, $data.authUrl, $data.accessUrl)
-  $client.InvokeUserAuth(@{
-    redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-    scope = "email profile https://www.googleapis.com/auth/drive.metadata.readonly"
-  }, $CODE_MSG, $true)
-  $client.InvokeAccessToken(@{
-    redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-    client_id = $client.clientId
-    client_secret = $client.clientSecret
-  })
-  $client.Save($dataPath)
-}
-
-$client.InvokeApi('GET', "https://www.googleapis.com/drive/v2/files", $null) | ConvertTo-Json
+Add-OauthClientInfo $info $res | Tee-Object -Variable info

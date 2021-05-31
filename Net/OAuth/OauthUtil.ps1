@@ -1,20 +1,26 @@
-# ユーティリティ関数
+# OAuth 1.0a/2.0 処理用ユーティリティ関数
 
-function ReadUserInput($message, $dialog) {
+$OAUTH1A_USER_AGENT = "PsOauth1aClient"
+$OAUTH1A_VERIFIER_MSG = "完了画面に表示されたトークン、または完了画面/遷移エラー画面のURLから oauth_verifier の値を入力してください。"
+
+$OAUTH2_USER_AGENT = "PsOauth2Client"
+$OAUTH2_CODE_MSG = "完了画面に表示されたコード、または完了/遷移エラー画面のURLからcodeの値を入力してください。"
+
+function Read-UserInput($Message, $Dialog) {
   $str = $null
-  if (!$dialog) {
-    $str = Read-Host $message
-    # ※accessToken貼り付けたときに、時々、文字が欠けるので注意。
+  if (!$Dialog) {
+    # ※コピペで文字列を貼り付けたときに、時々、文字が欠けるので注意。
+    $str = Read-Host $Message
   } else {
-    $str = ShowInputDialog $message
+    $str = Show-InputDialog $Message
   }
   return $str
 }
 
-function ShowInputDialog($message, $title) {
+function Show-InputDialog($Message, $Title) {
   Add-Type -AssemblyName System.Windows.Forms
   $form = New-Object System.Windows.Forms.Form -Property @{
-    Text = $title
+    Text = $Title
     Width = 300
     Height = 200
   }
@@ -23,7 +29,7 @@ function ShowInputDialog($message, $title) {
     Dock = [System.Windows.Forms.DockStyle]::Fill
   }))
   $form.Controls.Add((New-Object System.Windows.Forms.Label -Property @{
-    Text = $message
+    Text = $Message
     Dock = [System.Windows.Forms.DockStyle]::Top
   }))
   $form.Controls.Add(($button = New-Object System.Windows.Forms.Button -Property @{
@@ -45,61 +51,95 @@ function ShowInputDialog($message, $title) {
 .OUTPUTS
   Content-Type が application/json の場合に、byte[]を返却したいが、PowerShellのfunctionの仕様で、Object[]に変換されてしまうため、ハッシュで返却。
 #>
-function ConvToWrappedBody($params, $contentType='application/x-www-form-urlencoded') {
+function ConvertTo-WrappedHttpBody($Hash, $ContentType='application/x-www-form-urlencoded') {
   $body = $null
-  if ($contentType -eq 'application/x-www-form-urlencoded') {
-    $body = @{value=$params}
-  } elseif ($contentType -match 'application/json') {
-    # $body = $params | ConvertTo-Json -Depth 100
-    $body = ConvToWrappedJsonBody $params
+  if ($ContentType -eq 'application/x-www-form-urlencoded') {
+    $body = @{Value=$Hash}
+  } elseif ($ContentType -match 'application/json') {
+    $str = $Hash | ConvertTo-Json -Depth 100
+    $body = @{Value=[System.Text.Encoding]::UTF8.GetBytes($str)}
   } else {
-    throw "ERROR: invalid contentType, $contentType"
+    throw "ERROR: invalid ContentType, $ContentType"
   }
   return $body
 }
 
-<#
-.SYNOPSIS
-  HTTPボディのハッシュをJSON文字列のバイト配列に変換
-.OUTPUTS
-  byte[]を返却したいが、PowerShellのfunctionの仕様で、Object[]に変換されてしまうため、ハッシュで返却。
-#>
-function ConvToWrappedJsonBody($params) {
-  $jsonStr = $params | ConvertTo-Json -Depth 100
-  return @{value=[System.Text.Encoding]::UTF8.GetBytes($jsonStr)}
-}
-
 # HTTPアクセスエラー時のエラー情報を表示
-function PrintWebException($e) {
+function Write-WebException($Ex) {
   try {
-    Write-Host $e
-    Write-Host "$($e.Exception.Status.value__) $($e.Exception.Status.ToString())"
-    $stream = $e.Exception.Response.GetResponseStream()
+    Write-Host $Ex
+    Write-Host "$($Ex.Exception.Status.value__) $($Ex.Exception.Status.ToString())"
+    $stream = $Ex.Exception.Response.GetResponseStream()
     $reader = New-Object System.IO.StreamReader $stream
     $reader.BaseStream.Position = 0
     $reader.DiscardBufferedData()
     Write-Host $reader.ReadToEnd()
     $stream.Close()
   } catch {
-    Write-Host "PrintWebException ERROR: $_"
+    Write-Host "WARN: Write-WebException, $_"
   }
 }
 
 # 簡易的にデータを暗号化ファイルとして保存/読み込みできるようにした。（あまり良くない実装かもしれない）
-function SaveSecretObject($path, $obj) {
-  $jsonStr = ConvertTo-Json $obj -Compress
-  ConvertTo-SecureString $jsonStr -AsPlainText -Force | ConvertFrom-SecureString | Set-Content $path
-  Write-Verbose "Saved $path"
+function Export-OauthClientInfo($Path, $ClientInfo) {
+  $jsonStr = ConvertTo-Json $ClientInfo -Compress
+  ConvertTo-SecureString $jsonStr -AsPlainText -Force | ConvertFrom-SecureString | Set-Content $Path
+  Write-Verbose "Saved $Path"
 }
-function LoadSecretObject($path) {
-  $ss = Get-Content $path | ConvertTo-SecureString
+function Import-OauthClientInfo($Path) {
+  $ss = Get-Content $Path | ConvertTo-SecureString
   $jsonStr = [System.Runtime.InteropServices.Marshal]::PtrToStringBSTR(
     [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($ss))
   $jsonObj = ConvertFrom-Json $jsonStr
-  Write-Verbose "Loaded $path"
-  return $jsonObj
+
+  # PSCustomObject を Hashtable へ変換
+  $jsonHash = @{}
+  $jsonObj.psobject.properties | ForEach-Object {
+    $jsonHash[$_.Name] = $_.Value
+  }
+
+  Write-Verbose "Loaded $Path"
+  return $jsonHash
+}
+function New-OauthClientInfo($ClientId, $ClientSecret, $RedirectUri) {
+  return @{
+    ClientId = $ClientId
+    ClientSecret = $ClientSecret
+    RedirectUri = $RedirectUri
+  }
+}
+function Add-OauthClientInfo($ClientInfo, $Response) {
+  $items = $null
+  if ($Response -is [PSCustomObject]) {
+    $items = $Response.psobject.properties
+  } else {
+    $items = $Response.GetEnumerator()
+  }
+  $items | ForEach-Object {
+    $name = ConvertTo-UpperCamelCase $_.Name
+    $ClientInfo[$name] = $_.Value
+  }
+  return $ClientInfo
 }
 
-function ToCamelCase($snakeCase) {
-  return ([regex]"_([a-z])").Replace($snakeCase, {$args[0].Groups[1].Value.ToUpper()})
+function ConvertTo-UpperCamelCase($SnakeCase) {
+  $str = ([regex]"^([a-z])").Replace($SnakeCase, {$args[0].Groups[1].Value.ToUpper()})
+  return ([regex]"_([a-z])").Replace($str, {$args[0].Groups[1].Value.ToUpper()})
+}
+
+function ConvertTo-LowerCamelCase($SnakeCase) {
+  return ([regex]"_([a-z])").Replace($SnakeCase, {$args[0].Groups[1].Value.ToUpper()})
+}
+
+function Write-ObjectDebug($Name, $Obj) {
+  $value = "null"
+  if ($Obj) {
+    $value = $Obj.GetType().FullName
+    if ($Obj -is [byte[]]) {
+      $value += ", Length=" + $Obj.Length
+    } else {
+      $value += ", " + ($Obj | ConvertTo-Json)
+    }
+  }
+  Write-Debug "$Name : $value"
 }
