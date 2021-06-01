@@ -101,14 +101,27 @@ function Import-OauthClientInfo($Path) {
   Write-Verbose "Loaded $Path"
   return $jsonHash
 }
-function New-OauthClientInfo($ClientId, $ClientSecret, $RedirectUri) {
+function New-Oauth2ClientInfo($ClientId, $ClientSecret, $RedirectUri) {
   return @{
     ClientId = $ClientId
     ClientSecret = $ClientSecret
     RedirectUri = $RedirectUri
   }
 }
-function Add-OauthClientInfo($ClientInfo, $Response) {
+function New-Oauth1aClientInfo($ConsumerKey, $ConsumerSecret, $RequestUrl, $AuthUrl, $AccessUrl, $CallbackUrl) {
+  return @{
+    ConsumerKey = $ConsumerKey
+    ConsumerSecret = $ConsumerSecret
+    RequestUrl = $RequestUrl
+    AuthUrl = $AuthUrl
+    AccessUrl = $AccessUrl
+    CallbackUrl = $CallbackUrl
+  }
+}
+function Add-Oauth2ClientInfo($ClientInfo, $Response) {
+  return Add-Oauth1aClientInfo $ClientInfo $Response
+}
+function Add-Oauth1aClientInfo($ClientInfo, $Response) {
   $items = $null
   if ($Response -is [PSCustomObject]) {
     $items = $Response.psobject.properties

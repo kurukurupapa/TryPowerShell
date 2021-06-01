@@ -38,7 +38,7 @@ Invoke-Oauth2AccessToken "https://oauth2.googleapis.com/token" $authCode @{
   client_id = $info.ClientId
   client_secret = $info.ClientSecret
 } | Tee-Object -Variable res
-Add-OauthClientInfo $info $res | Tee-Object -Variable info
+Add-Oauth2ClientInfo $info $res | Tee-Object -Variable info
 
 # •Û‘¶
 Export-OauthClientInfo $infoPath $info
@@ -52,4 +52,4 @@ Invoke-Oauth2RefreshToken "https://oauth2.googleapis.com/token" $info.RefreshTok
   client_id = $info.ClientId
   client_secret = $info.ClientSecret
 } | Tee-Object -Variable res
-Add-OauthClientInfo $info $res | Tee-Object -Variable info
+Add-Oauth2ClientInfo $info $res | Tee-Object -Variable info
