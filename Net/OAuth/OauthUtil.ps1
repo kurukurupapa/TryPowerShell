@@ -14,6 +14,10 @@ function Read-UserInput($Message, $Dialog) {
   } else {
     $str = Show-InputDialog $Message
   }
+  $str = $str.Trim()
+  if (!$str) {
+    throw "ERROR: invalid user input, [$str]"
+  }
   return $str
 }
 
