@@ -29,7 +29,10 @@ if (Test-Path $infoPath) {
 # stateパラメータを設定することが推奨されるが今回は省略。
 $authCode = Invoke-Oauth2UserAuth "https://accounts.google.com/o/oauth2/v2/auth" $info.ClientId @{
   redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-  scope = "email profile https://www.googleapis.com/auth/drive.metadata.readonly"
+  scope = "email profile" +
+    " https://www.googleapis.com/auth/drive.metadata.readonly" +
+    # " https://www.googleapis.com/auth/tasks.readonly"
+    " https://www.googleapis.com/auth/tasks"
 } -Message $CODE_MSG -Dialog $true
 
 # ２．アクセストークンリクエスト
@@ -45,7 +48,60 @@ Export-OauthClientInfo $infoPath $info
 Import-OauthClientInfo $infoPath | Tee-Object -Variable info
 
 # ３．リソースAPI
-Invoke-Oauth2Api 'GET' "https://www.googleapis.com/drive/v2/files" $info.AccessToken | ConvertTo-Json
+
+# Google Drive API
+# [Introduction to Google Drive API ?|? Google Developers](https://developers.google.com/drive/api/v3/about-sdk)
+Invoke-Oauth2Api GET "https://www.googleapis.com/drive/v3/files" $info.AccessToken | ConvertTo-Json
+
+# Google Tasks API
+# [Overview ?|? Tasks API ?|? Google Developers](https://developers.google.com/tasks)
+# TaskList 追加
+Invoke-Oauth2Api POST "https://tasks.googleapis.com/tasks/v1/users/@me/lists" $info.AccessToken @{
+  title = "PsOauth2Client TaskList 01"
+} -ContentType "application/json" | Tee-Object -Variable taskListRes | ConvertTo-Json
+# TaskList 変更
+Invoke-Oauth2Api PATCH "https://tasks.googleapis.com/tasks/v1/users/@me/lists/$($taskListRes.id)" $info.AccessToken @{
+  title = "PsOauth2Client TaskList 01b"
+} -ContentType "application/json" | ConvertTo-Json
+Invoke-Oauth2Api PUT "https://tasks.googleapis.com/tasks/v1/users/@me/lists/$($taskListRes.id)" $info.AccessToken @{
+  id = $taskListRes.id # idがないとエラーになる
+  title = "PsOauth2Client TaskList 01c"
+} -ContentType "application/json" | ConvertTo-Json
+# TaskList 取得
+Invoke-Oauth2Api GET "https://tasks.googleapis.com/tasks/v1/users/@me/lists/$($taskListRes.id)" $info.AccessToken | ConvertTo-Json
+# TaskList 一覧
+Invoke-Oauth2Api GET "https://tasks.googleapis.com/tasks/v1/users/@me/lists" $info.AccessToken | ConvertTo-Json
+# Task 追加
+Invoke-Oauth2Api POST "https://tasks.googleapis.com/tasks/v1/lists/$($taskListRes.id)/tasks" $info.AccessToken @{
+  title = "タスク1"
+  notes = "タスクの詳細です。"
+  due = (Get-Date).AddDays(1).ToString("o")
+} -ContentType "application/json" | Tee-Object -Variable taskRes | ConvertTo-Json
+# Task 追加（子タスク）
+Invoke-Oauth2Api POST "https://tasks.googleapis.com/tasks/v1/lists/$($taskListRes.id)/tasks" $info.AccessToken @{
+  title = "タスク2"
+} -ContentType "application/json" | Tee-Object -Variable task2Res | ConvertTo-Json
+Invoke-Oauth2Api POST "https://tasks.googleapis.com/tasks/v1/lists/$($taskListRes.id)/tasks/$($task2Res.id)/move" $info.AccessToken @{
+  parent = $taskRes.id
+} -ContentType "application/json" | ConvertTo-Json
+# Task 変更
+Invoke-Oauth2Api PATCH "https://tasks.googleapis.com/tasks/v1/lists/$($taskListRes.id)/tasks/$($taskRes.id)" $info.AccessToken @{
+  title = "タスク1b"
+} -ContentType "application/json" | ConvertTo-Json
+Invoke-Oauth2Api PUT "https://tasks.googleapis.com/tasks/v1/lists/$($taskListRes.id)/tasks/$($taskRes.id)" $info.AccessToken @{
+  id = $taskRes.id # idがないとエラーになる
+  title = "タスク1c"
+  status = "completed"
+} -ContentType "application/json" | ConvertTo-Json
+# Task 取得
+Invoke-Oauth2Api GET "https://tasks.googleapis.com/tasks/v1/lists/$($taskListRes.id)/tasks/$($taskRes.id)" $info.AccessToken | ConvertTo-Json
+# Task 一覧
+Invoke-Oauth2Api GET "https://tasks.googleapis.com/tasks/v1/lists/$($taskListRes.id)/tasks" $info.AccessToken | ConvertTo-Json
+# Task 削除
+Invoke-Oauth2Api DELETE "https://tasks.googleapis.com/tasks/v1/lists/$($taskListRes.id)/tasks/$($taskRes.id)" $info.AccessToken
+Invoke-Oauth2Api POST "https://tasks.googleapis.com/tasks/v1/lists/$($taskListRes.id)/clear" $info.AccessToken
+# TaskList 削除
+Invoke-Oauth2Api DELETE "https://tasks.googleapis.com/tasks/v1/users/@me/lists/$($taskListRes.id)" $info.AccessToken
 
 # ４．リフレッシュトークンリクエスト
 Invoke-Oauth2RefreshToken "https://oauth2.googleapis.com/token" $info.RefreshToken @{

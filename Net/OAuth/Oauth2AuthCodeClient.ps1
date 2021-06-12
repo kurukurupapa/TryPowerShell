@@ -107,6 +107,7 @@ function Invoke-Oauth2Api($Method, $Url, $AccessToken, $OptionParams,
     'Content-Type' = $ContentType
   }
   $body = ConvertTo-WrappedHttpBody $OptionParams $ContentType
+  Write-Debug "Content-Type $ContentType"
   Write-ObjectDebug "HTTP request body" $body.Value
   try {
     return Invoke-RestMethod $Url -Method $Method -Headers $headers -Body $body.Value
