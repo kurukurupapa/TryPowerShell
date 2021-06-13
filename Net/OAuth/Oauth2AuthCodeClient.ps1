@@ -100,12 +100,18 @@ function Invoke-Oauth2RefreshToken($Url, $RefreshToken, $OptionParams) {
 .SYNOPSIS
   OAuth 2.0 認可コードグラントタイプにおけるリソースAPIリクエスト
 #>
-function Invoke-Oauth2Api($Method, $Url, $AccessToken, $OptionParams, $ContentType) {
+function Invoke-Oauth2Api($Method, $Url, $AccessToken, $OptionParams, $ContentType, $QueryParams) {
   $headers = @{
     'Authorization' = "Bearer $AccessToken"
   }
   if ($ContentType) { $headers += @{ 'Content-Type' = $ContentType }}
   $body = ConvertTo-WrappedHttpBody $OptionParams $ContentType
+  if ($QueryParams) {
+    $arr = $QueryParams.GetEnumerator() | Sort-Object Name | ForEach-Object {
+      [System.Web.HttpUtility]::UrlEncode($_.Name) + '=' + [System.Web.HttpUtility]::UrlEncode($_.Value)
+    }
+    $Url += '?' + ($arr -join '&')
+  }
   Write-Debug "Content-Type $ContentType"
   Write-ObjectDebug "HTTP request body" $body.Value
   try {

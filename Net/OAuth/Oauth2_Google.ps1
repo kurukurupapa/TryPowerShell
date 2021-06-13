@@ -121,17 +121,23 @@ Invoke-Oauth2Api POST "https://sheets.googleapis.com/v4/spreadsheets" $info.Acce
   ) }) })
 } -ContentType "application/json" | Tee-Object -Variable sheetRes | ConvertTo-Json
 # 値の追加
-Invoke-Oauth2Api POST "https://sheets.googleapis.com/v4/spreadsheets/$($sheetRes.spreadsheetId)/values/A1:append?valueInputOption=USER_ENTERED" $info.AccessToken @{
+Invoke-Oauth2Api POST "https://sheets.googleapis.com/v4/spreadsheets/$($sheetRes.spreadsheetId)/values/A1:append" $info.AccessToken -QueryParams @{
+  valueInputOption = "USER_ENTERED"
+} -OptionParams @{
   values = @(@("Append row 1"),@("Append row 2"))
-} "application/json" | ConvertTo-Json
+} -ContentType "application/json"  | ConvertTo-Json
 # 値の変更
-Invoke-Oauth2Api PUT "https://sheets.googleapis.com/v4/spreadsheets/$($sheetRes.spreadsheetId)/values/A1?valueInputOption=USER_ENTERED" $info.AccessToken @{
+Invoke-Oauth2Api PUT "https://sheets.googleapis.com/v4/spreadsheets/$($sheetRes.spreadsheetId)/values/A1" $info.AccessToken -QueryParams @{
+  valueInputOption = "USER_ENTERED"
+} -OptionParams @{
   values = @(@("A1b"),@("Dummy"))
-} "application/json" | ConvertTo-Json
-Invoke-Oauth2Api PUT "https://sheets.googleapis.com/v4/spreadsheets/$($sheetRes.spreadsheetId)/values/'シート1'!A1:B2?valueInputOption=USER_ENTERED" $info.AccessToken @{
+} -ContentType "application/json" | ConvertTo-Json
+Invoke-Oauth2Api PUT "https://sheets.googleapis.com/v4/spreadsheets/$($sheetRes.spreadsheetId)/values/'シート1'!A1:B2" $info.AccessToken -QueryParams @{
+  valueInputOption = "USER_ENTERED"
+} -OptionParams @{
   majorDimension = "COLUMNS"
   values = @(@("A1b","B1b"),@("A2b","B2b"))
-} "application/json" | ConvertTo-Json
+} -ContentType "application/json" | ConvertTo-Json
 # 値のクリア
 Invoke-Oauth2Api POST "https://sheets.googleapis.com/v4/spreadsheets/$($sheetRes.spreadsheetId)/values/A4:clear" $info.AccessToken | ConvertTo-Json
 # 取得
