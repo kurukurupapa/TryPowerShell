@@ -55,15 +55,13 @@ function Show-InputDialog($Message, $Title) {
 .OUTPUTS
   Content-Type が application/json の場合に、byte[]を返却したいが、PowerShellのfunctionの仕様で、Object[]に変換されてしまうため、ハッシュで返却。
 #>
-function ConvertTo-WrappedHttpBody($Hash, $ContentType='application/x-www-form-urlencoded') {
+function ConvertTo-WrappedHttpBody($Hash, $ContentType) {
   $body = $null
-  if ($ContentType -eq 'application/x-www-form-urlencoded') {
-    $body = @{Value=$Hash}
-  } elseif ($ContentType -match 'application/json') {
+  if ($ContentType -match 'application/json') {
     $str = $Hash | ConvertTo-Json -Depth 100
     $body = @{Value=[System.Text.Encoding]::UTF8.GetBytes($str)}
   } else {
-    throw "ERROR: invalid ContentType, $ContentType"
+    $body = @{Value=$Hash}
   }
   return $body
 }

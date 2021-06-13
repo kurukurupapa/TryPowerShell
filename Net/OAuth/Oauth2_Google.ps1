@@ -32,7 +32,8 @@ $authCode = Invoke-Oauth2UserAuth "https://accounts.google.com/o/oauth2/v2/auth"
   scope = "email profile" +
     " https://www.googleapis.com/auth/drive.metadata.readonly" +
     # " https://www.googleapis.com/auth/tasks.readonly"
-    " https://www.googleapis.com/auth/tasks"
+    " https://www.googleapis.com/auth/tasks" +
+    " https://www.googleapis.com/auth/spreadsheets"
 } -Message $CODE_MSG -Dialog $true
 
 # ２．アクセストークンリクエスト
@@ -102,6 +103,40 @@ Invoke-Oauth2Api DELETE "https://tasks.googleapis.com/tasks/v1/lists/$($taskList
 Invoke-Oauth2Api POST "https://tasks.googleapis.com/tasks/v1/lists/$($taskListRes.id)/clear" $info.AccessToken
 # TaskList 削除
 Invoke-Oauth2Api DELETE "https://tasks.googleapis.com/tasks/v1/users/@me/lists/$($taskListRes.id)" $info.AccessToken
+
+# Google Sheets API
+# [Sheets API ?|? Google Developers](https://developers.google.com/sheets/api)
+# Spreadsheetファイルを作成
+Invoke-Oauth2Api POST "https://sheets.googleapis.com/v4/spreadsheets" $info.AccessToken @{
+  properties = @{
+    title = "PsOauth2Client_Sheet_1"
+  }
+  sheets = @(@{ data = @(@{ rowData = @(@{ values = @(
+      @{ userEnteredValue = @{ stringValue = "A1" } },
+      @{ userEnteredValue = @{ stringValue = "B1" } }
+    )}, @{ values = @(
+      @{ userEnteredValue = @{ stringValue = "A2" } },
+      @{ userEnteredValue = @{ stringValue = "B2" } }
+    )}
+  ) }) })
+} -ContentType "application/json" | Tee-Object -Variable sheetRes | ConvertTo-Json
+# 値の追加
+Invoke-Oauth2Api POST "https://sheets.googleapis.com/v4/spreadsheets/$($sheetRes.spreadsheetId)/values/A1:append?valueInputOption=USER_ENTERED" $info.AccessToken @{
+  values = @(@("Append row 1"),@("Append row 2"))
+} "application/json" | ConvertTo-Json
+# 値の変更
+Invoke-Oauth2Api PUT "https://sheets.googleapis.com/v4/spreadsheets/$($sheetRes.spreadsheetId)/values/A1?valueInputOption=USER_ENTERED" $info.AccessToken @{
+  values = @(@("A1b"),@("Dummy"))
+} "application/json" | ConvertTo-Json
+Invoke-Oauth2Api PUT "https://sheets.googleapis.com/v4/spreadsheets/$($sheetRes.spreadsheetId)/values/'シート1'!A1:B2?valueInputOption=USER_ENTERED" $info.AccessToken @{
+  majorDimension = "COLUMNS"
+  values = @(@("A1b","B1b"),@("A2b","B2b"))
+} "application/json" | ConvertTo-Json
+# 値のクリア
+Invoke-Oauth2Api POST "https://sheets.googleapis.com/v4/spreadsheets/$($sheetRes.spreadsheetId)/values/A4:clear" $info.AccessToken | ConvertTo-Json
+# 取得
+Invoke-Oauth2Api GET "https://sheets.googleapis.com/v4/spreadsheets/$($sheetRes.spreadsheetId)/values/A1:B4" $info.AccessToken | ConvertTo-Json
+Invoke-Oauth2Api GET "https://sheets.googleapis.com/v4/spreadsheets/$($sheetRes.spreadsheetId)" $info.AccessToken | ConvertTo-Json
 
 # ４．リフレッシュトークンリクエスト
 Invoke-Oauth2RefreshToken "https://oauth2.googleapis.com/token" $info.RefreshToken @{
