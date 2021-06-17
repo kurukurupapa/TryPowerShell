@@ -4,7 +4,7 @@
 .DESCRIPTION
   ・アクセストークンの有効制限や再取得を考慮していません。
   参考
-  [OAuth Core 1.0a](https://oauth.net/core/1.0a/#sig_base_example)
+  [OAuth Core 1.0a](https://oauth.net/core/1.0a/)
   [curl - Powershell OAuth 1.0 'one-legged' authentication with HMAC-SHA1 fails - Stack Overflow](https://stackoverflow.com/questions/60992276/powershell-oauth-1-0-one-legged-authentication-with-hmac-sha1-fails)
 #>
 
