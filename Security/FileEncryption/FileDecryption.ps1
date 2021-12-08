@@ -4,6 +4,7 @@ FileEncryption.ps1で暗号化されたテキストファイルを復号化します。
 
 .DESCRIPTION
 このスクリプトは、FileEncryption.ps1で暗号化されたテキストファイルを復号化します。
+暗号化/復号化は同じユーザで実行する必要があります。
 エラー処理は、考慮していません。
 <CommonParameters> は、サポートしていません。
 
