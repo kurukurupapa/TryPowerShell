@@ -11,6 +11,7 @@ CSVファイルは、元のExcelファイルと同じフォルダに、シートごとに作成されます。
 
 .EXAMPLE
 ExcelToCsv1.ps1 "D:\tmp\dummy.xlsx"
+ExcelToCsv1.ps1 "D:\tmp"
 #>
 
 Param([string]$InPath)
