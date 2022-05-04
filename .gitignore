@@ -2,6 +2,7 @@
 *.log
 
 bak/
+work/
 **/TestResult/*.*
 
 Doc/Blog/All*.md

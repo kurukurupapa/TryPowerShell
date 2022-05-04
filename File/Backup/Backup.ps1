@@ -9,6 +9,7 @@
 
 .EXAMPLE
 Backup.ps1 D:\tmp\dummy.txt
+Backup.ps1 D:\tmp
 #>
 
 [CmdletBinding()]
