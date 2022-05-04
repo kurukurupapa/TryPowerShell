@@ -11,6 +11,7 @@ ExcelファイルをCSVファイルに変換するPowerShellスクリプトです。
 ExcelToCsv3.ps1 "D:\tmp\dummy.xlsx"
 ExcelToCsv3.ps1 "D:\tmp\dummy.xlsx" "D:\tmp2\output.csv"
 ExcelToCsv3.ps1 "D:\tmp\dummy.xlsx" "D:\tmp2\output.csv" -Sheet "Sheet1" -Range "B2:C3"
+ExcelToCsv3.ps1 "D:\tmp"
 #>
 
 [CmdletBinding()]
@@ -112,6 +113,18 @@ function ConvExcelToCsv($InPath, $InSheet, $InRange, $OutPath) {
   }
 }
 
+function ConvExcelToCsv2($InPath, $InSheet, $InRange, $OutPath) {
+  if (Test-Path -PathType leaf $InPath) {
+    Get-ChildItem -File $InPath | ForEach-Object {
+      ConvExcelToCsv $_.FullName $InSheet $InRange $OutPath
+    }
+  } else {
+    Get-ChildItem -File $InPath -Recurse -Include ('*.xls', '*.xls?') | ForEach-Object {
+      ConvExcelToCsv $_.FullName $InSheet $InRange $OutPath
+    }
+  }
+}
+
 # ヘルプ
 if (!$InPath) {
   Get-Help $MyInvocation.InvocationName -Detailed
@@ -120,5 +133,5 @@ if (!$InPath) {
   
 # 処理開始
 Write-Debug "$psName Start"
-ConvExcelToCsv $InPath $Sheet $Range $OutPath
+ConvExcelToCsv2 $InPath $Sheet $Range $OutPath
 Write-Debug "$psName End"

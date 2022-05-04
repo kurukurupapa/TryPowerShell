@@ -11,6 +11,7 @@ CSVファイルは、元のExcelファイルと同じフォルダに作成されます。
 
 .EXAMPLE
 ExcelToCsv2.ps1 "D:\tmp\dummy.xlsx"
+ExcelToCsv2.ps1 "D:\tmp"
 #>
 
 Param([string]$InPath)
@@ -43,6 +44,18 @@ function ConvExcelToCsv($InPath) {
   }
 }
 
+function ConvExcelToCsv2($InPath) {
+  if (Test-Path -PathType leaf $InPath) {
+    Get-ChildItem -File $InPath | ForEach-Object {
+      ConvExcelToCsv $_.FullName
+    }
+  } else {
+    Get-ChildItem -File $InPath -Recurse -Include ('*.xls', '*.xls?') | ForEach-Object {
+      ConvExcelToCsv $_.FullName
+    }
+  }
+}
+
 # ヘルプ
 if (!$InPath) {
   Get-Help $MyInvocation.InvocationName -Detailed
@@ -50,4 +63,4 @@ if (!$InPath) {
 }
 
 # 処理開始
-ConvExcelToCsv $InPath
+ConvExcelToCsv2 $InPath

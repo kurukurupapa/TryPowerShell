@@ -40,8 +40,12 @@ function ConvExcelToCsv($InPath) {
 }
 
 function ConvExcelToCsv2($InPath) {
-  Get-ChildItem -Recurse -File $InPath | ForEach-Object {
-    if ($_.Name -match '\.xls(.)?$') {
+  if (Test-Path -PathType leaf $InPath) {
+    Get-ChildItem -File $InPath | ForEach-Object {
+      ConvExcelToCsv $_.FullName
+    }
+  } else {
+    Get-ChildItem -File $InPath -Recurse -Include ('*.xls', '*.xls?') | ForEach-Object {
       ConvExcelToCsv $_.FullName
     }
   }
