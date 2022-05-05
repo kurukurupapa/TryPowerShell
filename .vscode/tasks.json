@@ -27,6 +27,11 @@
       "label": "MakeMd Net/MailClient",
       "type": "shell",
       "command": "cd Net/MailClient; powershell -ExecutionPolicy RemoteSigned -File MakeMd.ps1"
+    },
+    {
+      "label": "Compress Template",
+      "type": "shell",
+      "command": "cd Lang/Template; del *.log; powershell -Command 'Compress-Archive -Force Template2*.* ../../work/Template_v2.zip'"
     }
   ]
 }
