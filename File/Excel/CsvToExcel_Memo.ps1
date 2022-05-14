@@ -73,7 +73,6 @@ $book = $excel.Workbooks.Open($fullInPath)
 $book.Worksheets | ForEach-Object { $_.Name }
 $book.Worksheets.Item("Sheet1").Name
 $book.Worksheets.Item("シート2").Name
-#
 $excel.Quit()
 
 
@@ -85,6 +84,9 @@ wmic product where "Name like '%%Office%%'" get name,version
 # CSV
 $inPath = ".\File\Excel\TestData\CSV001_Data.csv"
 $fullInPath = Resolve-Path $inPath
+# ConvertFrom-Csvを使う方法
+# デフォルトだと、ヘッダーがついているカラムだけしか、読み込まれない模様。
+# 何かしらオプション設定すると改善できるかも。
 $row = 1
 Get-Content $fullInPath | ConvertFrom-Csv | ForEach-Object {
   $column = 1
@@ -94,6 +96,7 @@ Get-Content $fullInPath | ConvertFrom-Csv | ForEach-Object {
   }
   $row++
 }
+# 自分でカンマ分割する方法
 $row = 1
 Get-Content $fullInPath | ForEach-Object {
   $column = 1
