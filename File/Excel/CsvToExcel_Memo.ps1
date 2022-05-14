@@ -3,9 +3,28 @@
 # 動作確認
 # Visual Studio Code なら、実行したい行を選択して、F8キーで実行できる。
 
+.\File\Excel\CsvToExcel1.ps1
+.\File\Excel\CsvToExcel1.ps1 .\File\Excel\TestData\CSV001_Data.csv
+.\File\Excel\CsvToExcel1.ps1 .\File\Excel\TestData\*.csv
+.\File\Excel\CsvToExcel1.ps1 .\File\Excel\TestData
+
+.\File\Excel\CsvToExcel2.ps1
+$DebugPreference='Continue'; .\File\Excel\CsvToExcel2.ps1 -Verbose .\File\Excel\TestData\CSV001_Data.csv
+$DebugPreference='Continue'; .\File\Excel\CsvToExcel2.ps1 -Verbose .\File\Excel\TestData\*.csv
+$DebugPreference='Continue'; .\File\Excel\CsvToExcel2.ps1 -Verbose .\File\Excel\TestData
+$DebugPreference='Continue'; .\File\Excel\CsvToExcel2.ps1 -Verbose .\File\Excel\TestData\CSV001_Data.csv .\File\Excel\TestData\CsvToExcel_追記テスト.xlsx -Sheet "Target" -Range "B3:C7"
+$DebugPreference='Continue'; .\File\Excel\CsvToExcel2.ps1 -Verbose .\File\Excel\TestData\CSV001_Data.csv .\File\Excel\TestData\CsvToExcel_追記テスト.xlsx -Sheet "Target" -Range "B3:xx"
+$DebugPreference='Continue'; .\File\Excel\CsvToExcel2.ps1 -Verbose .\File\Excel\TestData\CSV001_Data.csv .\File\Excel\TestData\CsvToExcel_追記テスト.xlsx -Sheet "Nothing" -Range "B3:C7"
+
+Remove-Item ('.\File\Excel\TestData\CSV0*.xls*', '.\File\Excel\TestData\Sub\CSV0*.xls*')
+Copy-Item '.\File\Excel\TestData\CsvToExcel_追記テスト_template.xlsx' '.\File\Excel\TestData\CsvToExcel_追記テスト.xlsx'
+
+
+# コードサンプル
+# CSVをExcelファイルとして保存するサンプル
 $excel = New-Object -ComObject Excel.Application
-$InPath = ".\File\Excel\TestData\CSV001_Data.csv"
-$fullInPath = Resolve-Path $InPath
+$inPath = ".\File\Excel\TestData\CSV001_Data.csv"
+$fullInPath = Resolve-Path $inPath
 $book = $excel.Workbooks.Open($fullInPath)
 # xls
 $outPath = $fullInPath -replace '\.csv', '.xls'
@@ -46,8 +65,51 @@ $outPath = $fullInPath -replace '\.csv', '.xlsx'
 $book.SaveCopyAs($outPath) #OKと思ったら、拡張子xlsxなのに中身はCSVのままだった。
 
 
-.\File\Excel\CsvToExcel1.ps1
-.\File\Excel\CsvToExcel1.ps1 .\File\Excel\TestData\CSV001_Data.csv
-.\File\Excel\CsvToExcel1.ps1 .\File\Excel\TestData\CSV001_Data.csv -Verbose -Debug
-.\File\Excel\CsvToExcel1.ps1 .\File\Excel\TestData\*.csv
-.\File\Excel\CsvToExcel1.ps1 .\File\Excel\TestData
+# Excelファイルからシート一覧を取得するサンプル
+$excel = New-Object -ComObject Excel.Application
+$inPath = ".\File\Excel\TestData\Excel003_Data.xlsx"
+$fullInPath = Resolve-Path $inPath
+$book = $excel.Workbooks.Open($fullInPath)
+$book.Worksheets | ForEach-Object { $_.Name }
+$book.Worksheets.Item("Sheet1").Name
+$book.Worksheets.Item("シート2").Name
+#
+$excel.Quit()
+
+
+# Excelのバージョンを確認？
+$(New-Object -ComObject Excel.Application).Version
+wmic product where "Name like '%%Office%%'" get name,version
+
+
+# CSV
+$inPath = ".\File\Excel\TestData\CSV001_Data.csv"
+$fullInPath = Resolve-Path $inPath
+$row = 1
+Get-Content $fullInPath | ConvertFrom-Csv | ForEach-Object {
+  $column = 1
+  $_ | ForEach-Object {
+    Write-Host "$row $column $_"
+    $column++
+  }
+  $row++
+}
+$row = 1
+Get-Content $fullInPath | ForEach-Object {
+  $column = 1
+  $_.Split(',') | ForEach-Object {
+    Write-Host "$row $column $_"
+    $column++
+  }
+  $row++
+}
+
+
+# 処理が異常終了した場合など、Excelのプロセスが残ることがある。次のコマンドでプロセスを確認できる。
+tasklist | findstr /I excel
+tasklist | findstr /I excel | ForEach-Object { if ($_ -match "^\S+\s+(\d+)\s+") { Stop-Process $Matches[1] }}
+
+
+# 参考サイト
+# [PowerShellでExcelファイルを作成してみる - Qiita](https://qiita.com/kurukurupapa@github/items/c1e51784e756bd3331a5)
+# [Excel Visual Basic for Applications (VBA) リファレンス | Microsoft Docs](https://docs.microsoft.com/ja-jp/office/vba/api/overview/excel)
