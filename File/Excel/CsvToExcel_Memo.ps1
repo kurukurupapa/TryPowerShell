@@ -12,12 +12,12 @@
 $DebugPreference='Continue'; .\File\Excel\CsvToExcel2.ps1 -Verbose .\File\Excel\TestData\CSV001_Data.csv
 $DebugPreference='Continue'; .\File\Excel\CsvToExcel2.ps1 -Verbose .\File\Excel\TestData\*.csv
 $DebugPreference='Continue'; .\File\Excel\CsvToExcel2.ps1 -Verbose .\File\Excel\TestData
+Copy-Item '.\File\Excel\TestData\CsvToExcel_追記テスト_template.xlsx' '.\File\Excel\TestData\CsvToExcel_追記テスト.xlsx'
 $DebugPreference='Continue'; .\File\Excel\CsvToExcel2.ps1 -Verbose .\File\Excel\TestData\CSV001_Data.csv .\File\Excel\TestData\CsvToExcel_追記テスト.xlsx -Sheet "Target" -Range "B3:C7"
 $DebugPreference='Continue'; .\File\Excel\CsvToExcel2.ps1 -Verbose .\File\Excel\TestData\CSV001_Data.csv .\File\Excel\TestData\CsvToExcel_追記テスト.xlsx -Sheet "Target" -Range "B3:xx"
 $DebugPreference='Continue'; .\File\Excel\CsvToExcel2.ps1 -Verbose .\File\Excel\TestData\CSV001_Data.csv .\File\Excel\TestData\CsvToExcel_追記テスト.xlsx -Sheet "Nothing" -Range "B3:C7"
 
-Remove-Item ('.\File\Excel\TestData\CSV0*.xls*', '.\File\Excel\TestData\Sub\CSV0*.xls*')
-Copy-Item '.\File\Excel\TestData\CsvToExcel_追記テスト_template.xlsx' '.\File\Excel\TestData\CsvToExcel_追記テスト.xlsx'
+Remove-Item ('.\File\Excel\TestData\CSV*.xls*', '.\File\Excel\TestData\Sub\CSV*.xls*') -Exclude 'CsvToExcel_追記テスト_template.xlsx'
 
 
 # コードサンプル
