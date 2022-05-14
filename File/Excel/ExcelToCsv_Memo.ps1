@@ -32,6 +32,4 @@ Remove-Item ('.\File\Excel\TestData\Excel*.csv', '.\File\Excel\TestData\Sub\Exce
 # 参考
 # [PowerShellでExcelファイルを読み込んでみる - Qiita](https://qiita.com/kurukurupapa@github/items/c17b80412341b8e463cc)
 # [PowerShellでExcelを操作する](https://zenn.dev/kumarstack55/articles/20210718-powershell-excel)
-# [Workbooks.Open メソッド (Excel) | Microsoft Docs](https://docs.microsoft.com/ja-jp/office/vba/api/excel.workbooks.open)
-# [Workbook.SaveAs メソッド (Excel) | Microsoft Docs](https://docs.microsoft.com/ja-jp/office/vba/api/excel.workbook.saveas)
-# [Workbook.Close メソッド (Excel) | Microsoft Docs](https://docs.microsoft.com/ja-jp/office/vba/api/excel.workbook.close)
+# [Excel Visual Basic for Applications (VBA) リファレンス | Microsoft Docs](https://docs.microsoft.com/ja-jp/office/vba/api/overview/excel)
