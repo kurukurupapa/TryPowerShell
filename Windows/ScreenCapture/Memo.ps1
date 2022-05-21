@@ -22,7 +22,7 @@ function GetFullPath($path) {
   [System.IO.Directory]::SetCurrentDirectory((Get-Location))
   return [System.IO.Path]::GetFullPath($path)
 }
-$rect = [System.Drawing.Rectangle]::FromLTRB(0, 0, 500, 500)
+$rect = New-Object System.Drawing.Rectangle(0, 0, 500, 500)
 CaptureToFile $rect "work\capture.png"
 
 # 画面キャプチャ（クリップボードへ）
@@ -82,6 +82,15 @@ function GetUserRect() {
 }
 $rect = GetUserRect
 
+$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose
+$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose 'All'           "work\ScreenCapture_All.png"
+$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose 'Primary'       "work\ScreenCapture_Primary.png"
+$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose "10,20,500,600" "work\ScreenCapture_Rect.png"
+$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose "10,20,500,600" -Clipboard
+
+New-Fixture -Name .\Windows\ScreenCapture\Func
+Invoke-Pester .\Windows\ScreenCapture\Func.Tests.ps1 -CodeCoverage .\Windows\ScreenCapture\Func.ps1
+
 # 参考サイト
 # [PowerShell モジュール ブラウザー - PowerShell | Microsoft Docs](https://docs.microsoft.com/ja-jp/powershell/module/?view=powershell-5.1)
 # [.NET API ブラウザー | Microsoft Docs](https://docs.microsoft.com/ja-jp/dotnet/api/?view=netframework-4.5)
@@ -91,6 +100,7 @@ $rect = GetUserRect
 # [簡単！PowerShellで作成できる画面録画ツールの紹介と作り方[No18] - BookALittle](https://bookalittle.com/howtocheck-operation-byrecording-pstool/)
 # [インターネット上の画像をクリップボードにコピーするコード(PowerShell版)](https://gist.github.com/bu762/6e0f3668e59d4a932821)
 # [Windowsのコマンドラインからスクリーンショットを撮る(PowerShell) | Misohena Blog](https://misohena.jp/blog/2021-08-08-take-screenshot-on-windows-power-shell.html)
+# [pester/Pester at rel/3.x.x](https://github.com/pester/Pester/tree/rel/3.x.x)
 
 # 動作確認環境
 $PSVersionTable
