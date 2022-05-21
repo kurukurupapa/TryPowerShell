@@ -3,9 +3,13 @@
 # 動作確認
 # Visual Studio Code なら、実行したい行を選択して、F8キーで実行できる。
 
-# 画面キャプチャ
+# 画面キャプチャ（ファイル出力）
 Add-Type -AssemblyName System.Drawing
 function CaptureToFile($rect, $outPath) {
+  # Save時に、相対パスだとエラーになることがあるので、絶対パスに変更。
+  # パスが存在しないことも考慮して.Netで実装。Resolve-Pathだとエラーになる。
+  $outPath = GetFullPath $outPath
+  # キャプチャ
   $bitmap = New-Object System.Drawing.Bitmap($rect.Width, $rect.Height)
   $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
   $graphics.CopyFromScreen($rect.Left, $rect.Top, 0, 0, $bitmap.Size)
@@ -14,16 +18,18 @@ function CaptureToFile($rect, $outPath) {
   $bitmap.Dispose()
   Write-Host "キャプチャしました。 $($rect.Location) $($rect.Size) $outPath"
 }
+function GetFullPath($path) {
+  [System.IO.Directory]::SetCurrentDirectory((Get-Location))
+  return [System.IO.Path]::GetFullPath($path)
+}
 $rect = [System.Drawing.Rectangle]::FromLTRB(0, 0, 500, 500)
-$outPath = "work\a.png"
-CaptureToFile $rect $outPath
+CaptureToFile $rect "work\capture.png"
 
+# 画面キャプチャ（クリップボードへ）
 function CaptureToClipboard($rect) {
   $bitmap = New-Object System.Drawing.Bitmap($rect.Width, $rect.Height)
   $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
   $graphics.CopyFromScreen($rect.Left, $rect.Top, 0, 0, $bitmap.Size)
-  # Set-Clipboard -Value $bitmap
-  # Set-Clipboard -Value $graphics -Format Image
   [Windows.Forms.Clipboard]::SetImage($bitmap)
   $graphics.Dispose()
   $bitmap.Dispose()
@@ -31,6 +37,20 @@ function CaptureToClipboard($rect) {
 }
 CaptureToClipboard $rect
 Get-Clipboard -Format Image
+
+# マルチモニター考慮
+# 全モニターを1つの画像ファイルに保存
+$screens = [System.Windows.Forms.Screen]::AllScreens
+$top    = ($screens.Bounds.Top    | Measure-Object -Minimum).Minimum
+$left   = ($screens.Bounds.Left   | Measure-Object -Minimum).Minimum
+$right  = ($screens.Bounds.Right  | Measure-Object -Maximum).Maximum
+$bottom = ($screens.Bounds.Bottom | Measure-Object -Maximum).Maximum
+$rect = [System.Drawing.Rectangle]::FromLTRB($left, $top, $right, $bottom)
+CaptureToFile $rect "work\capture.png"
+# プライマリモニターのみ
+$rect = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+CaptureToFile $rect "work\capture.png"
+# アクティブモニターのみ →C#/.NET関数を自作する必要がありそうなので省略。
 
 # 画像をクリップボードにコピー
 $bitmap = New-Object System.Drawing.Bitmap($outPath)
@@ -70,6 +90,7 @@ $rect = GetUserRect
 # [Graphics クラス (System.Drawing) | Microsoft Docs](https://docs.microsoft.com/ja-jp/dotnet/api/system.drawing.graphics?view=netframework-4.5)
 # [簡単！PowerShellで作成できる画面録画ツールの紹介と作り方[No18] - BookALittle](https://bookalittle.com/howtocheck-operation-byrecording-pstool/)
 # [インターネット上の画像をクリップボードにコピーするコード(PowerShell版)](https://gist.github.com/bu762/6e0f3668e59d4a932821)
+# [Windowsのコマンドラインからスクリーンショットを撮る(PowerShell) | Misohena Blog](https://misohena.jp/blog/2021-08-08-take-screenshot-on-windows-power-shell.html)
 
 # 動作確認環境
 $PSVersionTable
