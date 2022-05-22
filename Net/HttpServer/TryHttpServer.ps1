@@ -4,6 +4,7 @@
 
 .DESCRIPTION
 このスクリプトは、PowerShellで、かんたんなHTTPサーバを起動します。
+実行には管理者権限が必要です。
 エラー処理は、考慮していません。
 <CommonParameters> は、サポートしていません。
 
