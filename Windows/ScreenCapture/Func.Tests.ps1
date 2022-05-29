@@ -1,9 +1,9 @@
-ï»¿$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path) -replace '\.Tests\.', '.'
 . "$here\$sut"
 
-Describe "Mainé–¢æ•°ã®ãƒ†ã‚¹ãƒˆ" {
-  It "çŸ©å½¢é ˜åŸŸã‚’ãƒ•ã‚¡ã‚¤ãƒ«ä¿å­˜" {
+Describe "MainŠÖ”‚ÌƒeƒXƒg" {
+  It "‹éŒ`—Ìˆæ‚ğƒtƒ@ƒCƒ‹•Û‘¶" {
     $areaStr = "10,20,30,40"
     $expectedRect = New-Object System.Drawing.Rectangle(10, 20, 30, 40)
     $resultPath = "work\ScreenCapture_Test.png"
@@ -18,7 +18,7 @@ Describe "Mainé–¢æ•°ã®ãƒ†ã‚¹ãƒˆ" {
     $bitmap.Dispose()
   }
 
-  It "ãƒ—ãƒ©ã‚¤ãƒãƒªãƒ¢ãƒ‹ã‚¿ãƒ¼ã‚’ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã¸" {
+  It "ƒvƒ‰ƒCƒ}ƒŠƒ‚ƒjƒ^[‚ğƒNƒŠƒbƒvƒ{[ƒh‚Ö" {
     $areaStr = 'Primary'
     $expectedRect = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
     Set-Clipboard $null
@@ -28,10 +28,36 @@ Describe "Mainé–¢æ•°ã®ãƒ†ã‚¹ãƒˆ" {
     $result | Should BeOfType System.Drawing.Bitmap
     $result.Size | Should Be $expectedRect.Size
   }
+
+  It "ŒJ‚è•Ô‚µƒLƒƒƒvƒ`ƒƒ_1•bŠÔŠu1‰ñ" {
+    $areaStr = "10,20,30,40"
+    $resultPath = "work\ScreenCapture_Test_Repetition.png"
+    if (Test-Path "work\ScreenCapture_Test_Repetition_*.png") {
+      Remove-Item "work\ScreenCapture_Test_Repetition_*.png"
+    }
+    Main $areaStr $resultPath -interval 1 -repetition 1
+
+    $count = (Get-Item "work\ScreenCapture_Test_Repetition_*.png" | Measure-Object).Count
+    $count | Should Be 1
+  }
+  It "ŒJ‚è•Ô‚µƒLƒƒƒvƒ`ƒƒ_2•bŠÔŠu3‰ñ" {
+    $areaStr = "10,20,30,40"
+    $resultPath = "work\ScreenCapture_Test_Repetition.png"
+    if (Test-Path "work\ScreenCapture_Test_Repetition_*.png") {
+      Remove-Item "work\ScreenCapture_Test_Repetition_*.png"
+    }
+    Main $areaStr $resultPath -interval 2 -repetition 3
+
+    $count = (Get-Item "work\ScreenCapture_Test_Repetition_*.png" | Measure-Object).Count
+    $count | Should Be 3
+  }
+  It "ŒJ‚è•Ô‚µƒLƒƒƒvƒ`ƒƒ_‰ñ”§ŒÀ‚È‚µ" {
+    Write-Warning "ƒeƒXƒg•s‰Â"
+  }
 }
 
-Describe "Captureé–¢æ•°ã®ãƒ†ã‚¹ãƒˆ" {
-  It "å¼•æ•°ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æŒ‡å®š" {
+Describe "CaptureŠÖ”‚ÌƒeƒXƒg" {
+  It "ˆø”ƒtƒ@ƒCƒ‹‚ğw’è" {
     $rect = New-Object System.Drawing.Rectangle(10, 20, 30, 40)
     $resultPath = ".\work\ScreenCapture_Test.png"
     if (Test-Path $resultPath) {
@@ -45,7 +71,7 @@ Describe "Captureé–¢æ•°ã®ãƒ†ã‚¹ãƒˆ" {
     $bitmap.Dispose()
   }
 
-  It "å¼•æ•°ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã‚’æŒ‡å®š" {
+  It "ˆø”ƒNƒŠƒbƒvƒ{[ƒh‚ğw’è" {
     $rect = New-Object System.Drawing.Rectangle(10, 20, 30, 40)
     Set-Clipboard $null
     Capture $rect -clipboard $true
@@ -56,53 +82,53 @@ Describe "Captureé–¢æ•°ã®ãƒ†ã‚¹ãƒˆ" {
   }
 }
 
-Describe "GetRectAreaé–¢æ•°ã®ãƒ†ã‚¹ãƒˆ" {
-  It "å¼•æ•°ãŒçŸ©å½¢" {
+Describe "GetRectAreaŠÖ”‚ÌƒeƒXƒg" {
+  It "ˆø”‚ª‹éŒ`" {
     $expected = New-Object System.Drawing.Rectangle(10, 20, 30, 40)
     GetRectArea "10,20,30,40" | Should Be $expected
   }
-  It "å¼•æ•°ãŒçŸ©å½¢ã§ã€è¦ç´ ãŒå°‘ãªã„" {
-    { GetRectArea "10,20,30" } | Should Throw "è§£æã‚¨ãƒ©ãƒ¼"
+  It "ˆø”‚ª‹éŒ`‚ÅA—v‘f‚ª­‚È‚¢" {
+    { GetRectArea "10,20,30" } | Should Throw "‰ğÍƒGƒ‰["
   }
-  It "å¼•æ•°ãŒçŸ©å½¢ã§ã€è¦ç´ ãŒå¤šã„" {
-    { GetRectArea "10,20,30,40,50" } | Should Throw "è§£æã‚¨ãƒ©ãƒ¼"
+  It "ˆø”‚ª‹éŒ`‚ÅA—v‘f‚ª‘½‚¢" {
+    { GetRectArea "10,20,30,40,50" } | Should Throw "‰ğÍƒGƒ‰["
   }
 
-  It "å¼•æ•°ãŒPrimary" {
+  It "ˆø”‚ªPrimary" {
     $expected = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
     GetRectArea 'Primary' | Should Be $expected
     GetRectArea 'primary' | Should Be $expected
     GetRectArea 'PRIMARY' | Should Be $expected
   }
-  It "å¼•æ•°ãŒAll" {
+  It "ˆø”‚ªAll" {
     $screens = [System.Windows.Forms.Screen]::AllScreens
-    $top    = ($screens.Bounds.Top    | Measure-Object -Minimum).Minimum
-    $left   = ($screens.Bounds.Left   | Measure-Object -Minimum).Minimum
-    $right  = ($screens.Bounds.Right  | Measure-Object -Maximum).Maximum
+    $top = ($screens.Bounds.Top | Measure-Object -Minimum).Minimum
+    $left = ($screens.Bounds.Left | Measure-Object -Minimum).Minimum
+    $right = ($screens.Bounds.Right | Measure-Object -Maximum).Maximum
     $bottom = ($screens.Bounds.Bottom | Measure-Object -Maximum).Maximum
     $expected = [System.Drawing.Rectangle]::FromLTRB($left, $top, $right, $bottom)
     GetRectArea 'All' | Should Be $expected
     GetRectArea 'all' | Should Be $expected
     GetRectArea 'ALL' | Should Be $expected
     if ([System.Windows.Forms.Screen]::AllScreens.Count -le 1) {
-      Write-Warning "ãƒãƒ«ãƒãƒ¢ãƒ‹ã‚¿ãƒ¼ã§ãªã„ãŸã‚ã€ååˆ†ãªãƒ†ã‚¹ãƒˆã«ãªã£ã¦ã„ãªã„ã€‚"
+      Write-Warning "ƒ}ƒ‹ƒ`ƒ‚ƒjƒ^[‚Å‚È‚¢‚½‚ßA\•ª‚ÈƒeƒXƒg‚É‚È‚Á‚Ä‚¢‚È‚¢B"
     }
   }
-  It "å¼•æ•°ãŒä¸æ­£æ–‡å­—åˆ—" {
-    { GetRectArea "Unknown" } | Should Throw "è§£æã‚¨ãƒ©ãƒ¼"
+  It "ˆø”‚ª•s³•¶š—ñ" {
+    { GetRectArea "Unknown" } | Should Throw "‰ğÍƒGƒ‰["
   }
 }
 
-Describe "GetOutFilePathé–¢æ•°ã®ãƒ†ã‚¹ãƒˆ" {
-  It "å¼•æ•°ã«ç›¸å¯¾ãƒ‘ã‚¹" {
+Describe "GetOutFilePathŠÖ”‚ÌƒeƒXƒg" {
+  It "ˆø”‚É‘Š‘ÎƒpƒX" {
     GetOutFilePath "work\a.png" | Should Be "$(Get-Location)\work\a.png"
   }
 
-  It "å¼•æ•°ã«çµ¶å¯¾ãƒ‘ã‚¹" {
+  It "ˆø”‚Éâ‘ÎƒpƒX" {
     GetOutFilePath "$(Get-Location)\work\a.png" | Should Be "$(Get-Location)\work\a.png"
   }
 
-  It "å¼•æ•°ã«ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª" {
+  It "ˆø”‚ÉƒfƒBƒŒƒNƒgƒŠ" {
     $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
     GetOutFilePath "work" "ScreenCapture" | Should Be "$(Get-Location)\work\ScreenCapture_${timestamp}.png"
   }

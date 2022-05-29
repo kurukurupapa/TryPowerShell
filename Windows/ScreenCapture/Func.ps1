@@ -4,12 +4,30 @@ ScreenCapture用関数
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms
 
-function Main($areaStr, $outPath, $clipboard) {
+function Main($areaStr, $outPath, $clipboard, $interval, $repetition) {
   $rect = GetRectArea $areaStr
-  if ($outPath) {
-    $outPath = GetOutFilePath $outPath "ScreenCapture"
+  $outPath2 = $null
+  if (!$interval) {
+    if ($outPath) {
+      $outPath2 = GetOutFilePath $outPath "ScreenCapture"
+    }
+    Capture $rect $outPath2 $clipboard
   }
-  Capture $rect $outPath $clipboard
+  else {
+    Write-Verbose "繰り返し 間隔:$interval 回数:$repetition"
+    $i = 0
+    while ($true) {
+      $i++
+      if ($outPath) {
+        $outPath2 = GetOutFilePath $outPath "ScreenCapture" $i
+      }
+      Capture $rect $outPath2 $clipboard
+      if ($repetition -and $i -ge $repetition) {
+        break
+      }
+      Start-Sleep $interval
+    }
+  }
 }
 
 function GetRectArea($areaStr) {
@@ -17,18 +35,21 @@ function GetRectArea($areaStr) {
   if (!$areaStr -or $areaStr.ToLower() -eq 'all') {
     # 全モニターを対象にする
     $screens = [System.Windows.Forms.Screen]::AllScreens
-    $top    = ($screens.Bounds.Top    | Measure-Object -Minimum).Minimum
-    $left   = ($screens.Bounds.Left   | Measure-Object -Minimum).Minimum
-    $right  = ($screens.Bounds.Right  | Measure-Object -Maximum).Maximum
+    $top = ($screens.Bounds.Top | Measure-Object -Minimum).Minimum
+    $left = ($screens.Bounds.Left | Measure-Object -Minimum).Minimum
+    $right = ($screens.Bounds.Right | Measure-Object -Maximum).Maximum
     $bottom = ($screens.Bounds.Bottom | Measure-Object -Maximum).Maximum
     $rect = [System.Drawing.Rectangle]::FromLTRB($left, $top, $right, $bottom)
-  } elseif ($areaStr.ToLower() -eq 'primary') {
+  }
+  elseif ($areaStr.ToLower() -eq 'primary') {
     # プライマリモニターのみ
     $rect = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-  } elseif ($areaStr.ToLower() -match "^(\d+),(\d+),(\d+),(\d+)$") {
+  }
+  elseif ($areaStr.ToLower() -match "^(\d+),(\d+),(\d+),(\d+)$") {
     # 矩形領域
     $rect = New-Object System.Drawing.Rectangle($Matches[1], $Matches[2], $Matches[3], $Matches[4])
-  } else {
+  }
+  else {
     throw "引数Areaの解析エラー [$areaStr]"
   }
   Write-Verbose "キャプチャ領域 $rect"
@@ -51,15 +72,21 @@ function Capture($rect, $outPath, $clipboard) {
   $bitmap.Dispose()
 }
 
-function GetOutFilePath($path, $defaultName) {
+function GetOutFilePath($path, $defaultName, $index) {
   # Bitmap.Save()時に、相対パスだとエラーになることがあるので、絶対パスに変更。
   # パスが存在しないことも考慮して.Netで実装。Resolve-Pathだとエラーになる。
   $outPath = GetFullPath $path
 
-  # 引数のパスがディレクトリの場合、ファイル名を付加する。
+  $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
   if (Test-Path $outPath -PathType Container) {
-    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    # 引数のパスがディレクトリの場合、ファイル名を付加する。
     $outPath = Join-Path $outPath "${defaultName}_${timestamp}.png"
+  }
+  elseif ($index) {
+    # 繰り返しキャプチャの場合、ファイル名にタイムスタンプを付与する。
+    $dir = Split-Path $outPath -Parent
+    $name = [System.IO.Path]::GetFileNameWithoutExtension($outPath) + "_$timestamp" + [System.IO.Path]::GetExtension($outPath)
+    $outPath = Join-Path $dir $name
   }
   return $outPath
 }

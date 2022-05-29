@@ -1,8 +1,20 @@
 # 画面キャプチャを撮るPowerShellスクリプトの開発メモ
+# ※Visual Studio Code なら、実行したい行を選択して、F8キーで実行できる。
 
 # 動作確認
-# Visual Studio Code なら、実行したい行を選択して、F8キーで実行できる。
+$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose
+$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose 'All'           "work\ScreenCapture_All.png"
+$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose 'Primary'       "work\ScreenCapture_Primary.png"
+$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose "10,20,500,600" "work\ScreenCapture_Rect.png"
+$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose "10,20,500,600" -Clipboard
+$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose "10,20,500,600" "work\ScreenCapture_Repetition.png" -Interval 2 -Repetition 3
 
+# Pesterによる単体テスト
+New-Fixture -Name .\Windows\ScreenCapture\Func
+Invoke-Pester .\Windows\ScreenCapture\Func.Tests.ps1 -CodeCoverage .\Windows\ScreenCapture\Func.ps1
+
+
+# 実装検証
 # 画面キャプチャ（ファイル出力）
 Add-Type -AssemblyName System.Drawing
 function CaptureToFile($rect, $outPath) {
@@ -82,14 +94,6 @@ function GetUserRect() {
 }
 $rect = GetUserRect
 
-$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose
-$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose 'All'           "work\ScreenCapture_All.png"
-$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose 'Primary'       "work\ScreenCapture_Primary.png"
-$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose "10,20,500,600" "work\ScreenCapture_Rect.png"
-$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose "10,20,500,600" -Clipboard
-
-New-Fixture -Name .\Windows\ScreenCapture\Func
-Invoke-Pester .\Windows\ScreenCapture\Func.Tests.ps1 -CodeCoverage .\Windows\ScreenCapture\Func.ps1
 
 # 参考サイト
 # [PowerShell モジュール ブラウザー - PowerShell | Microsoft Docs](https://docs.microsoft.com/ja-jp/powershell/module/?view=powershell-5.1)

@@ -20,10 +20,14 @@ Param(
     全モニターの場合、"All"を指定する。
   #>
   [string]$Area,
-  <# 保存先ファイル。 #>
+  <# 保存先ファイル #>
   [string]$OutPath,
   <# クリップボードへコピーする場合に指定する。 #>
-  [switch]$Clipboard
+  [switch]$Clipboard,
+  <# キャプチャ間隔（秒） #>
+  [int]$Interval,
+  <# 繰り返し回数 #>
+  [int]$Repetition
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -39,5 +43,5 @@ if (!$Area -or (!$OutPath -and !$Clipboard)) {
 
 # 処理開始
 Write-Verbose "$psName Start"
-Main $Area $OutPath $Clipboard
+Main $Area $OutPath $Clipboard $Interval $Repetition
 Write-Verbose "$psName End"
