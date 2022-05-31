@@ -66,11 +66,8 @@ function GetDragRect() {
   while ([System.Windows.Forms.Control]::MouseButtons -ne 'None') { Start-Sleep 0.5 }
   $p2 = [System.Windows.Forms.Control]::MousePosition
   $rect = [System.Drawing.Rectangle]::FromLTRB(
-    [Math]::Min($p1.X, $p2.X),
-    [Math]::Min($p1.Y, $p2.Y),
-    [Math]::Max($p1.X, $p2.X),
-    [Math]::Max($p1.Y, $p2.Y)
-  )
+    [Math]::Min($p1.X, $p2.X), [Math]::Min($p1.Y, $p2.Y),
+    [Math]::Max($p1.X, $p2.X), [Math]::Max($p1.Y, $p2.Y))
   return $rect
 }
 
