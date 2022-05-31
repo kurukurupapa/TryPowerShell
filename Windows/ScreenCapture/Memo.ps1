@@ -5,7 +5,9 @@
 $DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose
 $DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose 'All'           "work\ScreenCapture_All.png"
 $DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose 'Primary'       "work\ScreenCapture_Primary.png"
+$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose 'Drag'          "work\ScreenCapture_Drag.png"
 $DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose "10,20,500,600" "work\ScreenCapture_Rect.png"
+$DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose "10,20,500,600" "work\space dir\ScreenCapture.png"
 $DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose "10,20,500,600" -Clipboard
 $DebugPreference='Continue'; Windows\ScreenCapture\ScreenCapture.ps1 -Verbose "10,20,500,600" "work\ScreenCapture_Repetition.png" -Interval 2 -Repetition 3
 
@@ -82,7 +84,7 @@ Add-Type -AssemblyName System.Windows.Forms
 [System.Windows.Forms.Control]::MouseButtons
 [System.Windows.Forms.Control]::MousePosition
 
-function GetUserRect() {
+function GetDragRect() {
   Write-Host "マウスをドラッグして矩形領域を選択してください。"
   while ([System.Windows.Forms.Control]::MouseButtons -eq 'None') { Start-Sleep 0.5 }; Write-Host "Pressed"
   $p1 = [System.Windows.Forms.Control]::MousePosition
@@ -92,7 +94,7 @@ function GetUserRect() {
   Write-Host $rect
   return $rect
 }
-$rect = GetUserRect
+$rect = GetDragRect
 
 
 # 参考サイト

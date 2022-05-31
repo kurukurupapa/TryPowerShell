@@ -49,10 +49,28 @@ function GetRectArea($areaStr) {
     # 矩形領域
     $rect = New-Object System.Drawing.Rectangle($Matches[1], $Matches[2], $Matches[3], $Matches[4])
   }
+  elseif ($areaStr.ToLower() -eq 'drag') {
+    $rect = GetDragRect
+  }
   else {
     throw "引数Areaの解析エラー [$areaStr]"
   }
-  Write-Verbose "キャプチャ領域 $rect"
+  Write-Verbose "キャプチャ領域 X,Y,W,H:$($rect.X),$($rect.Y),$($rect.Width),$($rect.Height)"
+  return $rect
+}
+
+function GetDragRect() {
+  Write-Host "マウスをドラッグして矩形領域を選択してください。"
+  while ([System.Windows.Forms.Control]::MouseButtons -eq 'None') { Start-Sleep 0.5 }
+  $p1 = [System.Windows.Forms.Control]::MousePosition
+  while ([System.Windows.Forms.Control]::MouseButtons -ne 'None') { Start-Sleep 0.5 }
+  $p2 = [System.Windows.Forms.Control]::MousePosition
+  $rect = [System.Drawing.Rectangle]::FromLTRB(
+    [Math]::Min($p1.X, $p2.X),
+    [Math]::Min($p1.Y, $p2.Y),
+    [Math]::Max($p1.X, $p2.X),
+    [Math]::Max($p1.Y, $p2.Y)
+  )
   return $rect
 }
 

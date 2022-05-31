@@ -114,6 +114,9 @@ Describe "GetRectArea関数のテスト" {
       Write-Warning "マルチモニターでないため、十分なテストになっていない。"
     }
   }
+  It "引数がDrag" {
+    Write-Warning "テスト不可"
+  }
   It "引数が不正文字列" {
     { GetRectArea "Unknown" } | Should Throw "解析エラー"
   }
