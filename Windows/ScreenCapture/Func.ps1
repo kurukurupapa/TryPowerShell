@@ -68,6 +68,7 @@ function GetDragRect() {
   $rect = [System.Drawing.Rectangle]::FromLTRB(
     [Math]::Min($p1.X, $p2.X), [Math]::Min($p1.Y, $p2.Y),
     [Math]::Max($p1.X, $p2.X), [Math]::Max($p1.Y, $p2.Y))
+  Write-Host "‘I‘ğŠ®—¹‚Å‚·B"
   return $rect
 }
 
