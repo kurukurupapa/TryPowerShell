@@ -167,6 +167,8 @@ $args.Length
 ```powershell
 $env:PATH
 $env:PATH = "$env:PATH;C:\Users\xxx\bin"
+Get-ChildItem env:
+Get-ChildItem env: | ?{ $_.Value -match "PowerShell" }
 ```
 
 ## 制御構造
