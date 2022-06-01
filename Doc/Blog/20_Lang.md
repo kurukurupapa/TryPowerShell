@@ -242,7 +242,7 @@ $obj2 = New-Object Class2("value1", "value2")
 $obj2.ToString()
 ```
 
-try-catch
+try-catch-finally
 
 ```powershell
 try {
@@ -250,6 +250,8 @@ try {
 } catch {
   echo $_
   echo $error[0]
+} finally {
+  echo "finally"
 }
 ```
 
