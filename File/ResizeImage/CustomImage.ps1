@@ -48,6 +48,15 @@ class CustomImage {
     Write-Verbose "リサイズ：${w}, ${h}"
   }
 
+  # フレーム描画
+  [void] DrawFrame($color, $size) {
+    $pen = New-Object System.Drawing.Pen($color, $size)
+    $g = [System.Drawing.Graphics]::FromImage($this.Image)
+    $g.DrawRectangle($pen, 0, 0, $this.Image.Width - 1, $this.Image.Height - 1)
+    $g.Dispose()
+    Write-Verbose "フレーム描画：$($color.Name), ${size}px"
+  }
+
   [void] SetImage($image) {
     $this.Dispose()
     $this.Image = $image

@@ -79,6 +79,27 @@ for ($i = 0; $i -lt $sizeArr.Length; $i++) {
   $buttonPanel.Controls.Add($resizeButton)
 }
 
+# フレーム追加ボタン
+$frameArr = @(
+  @([System.Drawing.Color]::Black, 1),
+  @([System.Drawing.Color]::Gray, 1)
+)
+for ($i = 0; $i -lt $frameArr.Length; $i++) {
+  $color, $size = $frameArr[$i]
+  $frameButton = New-Object System.Windows.Forms.Button
+  $frameButton.AutoSize = $true
+  $frameButton.Text = "フレーム $($color.Name) ${size}px"
+  $frameButton.Tag = $i
+  $frameButton.Add_Click({
+    $color, $size = $frameArr[$this.Tag]
+    $imageObj.DrawFrame($color, $size)
+    $imageBox.Image = $imageObj.Image
+  })
+  # 親コントロールとの調整
+  $frameButton.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
+  $buttonPanel.Controls.Add($frameButton)
+}
+
 # リセットボタン
 $resetButton = New-Object System.Windows.Forms.Button
 $resetButton.AutoSize = $true
