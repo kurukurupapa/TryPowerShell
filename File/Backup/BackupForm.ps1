@@ -18,7 +18,6 @@ param (
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-$DebugPreference = "Continue"
 $psDir = Convert-Path $(Split-Path $MyInvocation.InvocationName -Parent)
 $psName = Split-Path $MyInvocation.InvocationName -Leaf
 $psBaseName = $psName -replace "\.ps1$", ""
@@ -34,10 +33,6 @@ if (!$path) {
 # ÉtÉHÅ[ÉÄ
 $form = New-Object System.Windows.Forms.Form -Property @{
   Text    = $psBaseName
-  # QVGA
-  # Width   = 320
-  # Height  = 240
-  # HVGA
   Width   = 480
   Height  = 320
   Padding = New-Object System.Windows.Forms.Padding(10)

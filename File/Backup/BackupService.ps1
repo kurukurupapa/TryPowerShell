@@ -29,12 +29,10 @@ class BackupService {
     elseif (Test-Path $this.inPath -PathType leaf) {
       if ($this.inPath -match "\.[^\.\\]*$") {
         # ファイル・拡張子あり
-        # $outpath = $path -replace "^(.*)(\.[^\.\\]*)$", "`$1_bk${timestamp}`$2"
         $this.outName = $this.inName -replace "^(.*)(\.[^\.\\]*)$", "`$1_bk${timestamp}`$2"
       }
       else {
         # ファイル・拡張子なし
-        # $outpath = $path + "_bk${timestamp}"
         $this.outName = "$($this.inName)_bk${timestamp}"
       }
     }
