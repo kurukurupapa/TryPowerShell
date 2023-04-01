@@ -22,15 +22,15 @@ $form.Text = $psBaseName
 $form.Size = New-Object System.Drawing.Size(800, 650)
 
 # DockStyleを設定して各種コントロールを作成
-function CreateDockPanel($title) {
+function CreateDockPanel($title, $dummy = $false) {
   # AutoSize=$trueにすると表示されなくなる（大きさが無くなる？）ので、サイズを指定している。
   $panel = New-Object System.Windows.Forms.Panel
   $panel.MinimumSize = New-Object System.Drawing.Size(50, 50)
-  $panel.Size = New-Object System.Drawing.Size(200, 250)
+  $panel.Size = New-Object System.Drawing.Size(200, 200)
 
   # DockStyle=Topの場合、後に追加するほど、より上に表示されるので、
   # 下に配置するコントロールから追加する。
-  $controls = CreateControls $panel $title
+  $controls = CreateControls $panel $title $dummy
   for ($i = $controls.Count - 1; $i -ge 0; $i--) {
     $control = $controls[$i]
     $control.Dock = [System.Windows.Forms.DockStyle]::Top
@@ -41,13 +41,13 @@ function CreateDockPanel($title) {
 }
 
 # FlowLayoutPanelを作成して各種コントロールを配置
-function CreateFlowPanel($title) {
+function CreateFlowPanel($title, $dummy = $false) {
   $panel = New-Object System.Windows.Forms.FlowLayoutPanel
   $panel.FlowDirection = [System.Windows.Forms.FlowDirection]::TopDown
   $panel.AutoSize = $true
   $panel.MinimumSize = New-Object System.Drawing.Size(100, 100)
 
-  $controls = CreateControls $panel $title
+  $controls = CreateControls $panel $title $dummy
   $panel.Controls.AddRange($controls)
 
   return $panel
@@ -55,7 +55,7 @@ function CreateFlowPanel($title) {
 
 # 各種コントロールを作成
 # ・マージンやパディング、背景色を操作可能
-function CreateControls($parent, $title) {
+function CreateControls($parent, $title, $dummy) {
   $controls = @()
 
   # タイトルラベル
@@ -63,22 +63,6 @@ function CreateControls($parent, $title) {
   $titleLabel.Text = $title
   $titleLabel.AutoSize = $true
   $controls += $titleLabel
-
-  # サンプルラジオボタン
-  $radioButton1 = New-Object System.Windows.Forms.RadioButton
-  $radioButton1.Text = "RadioButton 1"
-  $radioButton1.AutoSize = $true
-  $radioButton1.Add_CheckedChanged({
-      PrintControlInfo "サンプルラジオボタン1変更: " $this
-    })
-  $controls += $radioButton1
-  $radioButton2 = New-Object System.Windows.Forms.RadioButton
-  $radioButton2.Text = "RadioButton 2"
-  $radioButton2.AutoSize = $true
-  $radioButton2.Add_CheckedChanged({
-      PrintControlInfo "サンプルラジオボタン2変更: " $this
-    })
-  $controls += $radioButton2
 
   # AutoSize用チェックボックス
   $autoSizeCheckBox = New-Object System.Windows.Forms.CheckBox
@@ -174,17 +158,66 @@ function CreateControls($parent, $title) {
     })
   $controls += $controlColorComboBox
 
-  # ボタンも配置してみる
-  $button = New-Object System.Windows.Forms.Button
-  $button.Text = "OK"
-  $button.AutoSize = $true
-  $button.Tag = @{Parent = $parent }
-  $button.Add_Click({
-      $this.Tag.Parent.Controls | ForEach-Object {
-        PrintControlInfo "ボタンクリック: " $_
-      }
-    })
-  $controls += $button
+  if ($dummy) {
+    # サンプルラジオボタン
+    $radioButton1 = New-Object System.Windows.Forms.RadioButton
+    $radioButton1.Text = "RadioButton 1"
+    $radioButton1.AutoSize = $true
+    $radioButton1.Add_CheckedChanged({
+        PrintControlInfo "サンプルラジオボタン1変更: " $this
+      })
+    $controls += $radioButton1
+    $radioButton2 = New-Object System.Windows.Forms.RadioButton
+    $radioButton2.Text = "RadioButton 2"
+    $radioButton2.AutoSize = $true
+    $radioButton2.Add_CheckedChanged({
+        PrintControlInfo "サンプルラジオボタン2変更: " $this
+      })
+    $controls += $radioButton2
+
+    # サンプルラジオボタン（グループボックスあり）
+    # グループボックスのAutoSize=$trueを設定すると大きさが非常に小さくなる。
+    # Sizeに初期サイズを設定しておくと、子コントロールに合わせて大きくなる模様。
+    $groupBox = New-Object System.Windows.Forms.GroupBox
+    $groupBox.Text = "サンプルグループボックス"
+    # $groupBox.AutoSize = $true
+    # $groupBox.Height = 50
+    # $groupBox.MinimumSize = New-Object System.Drawing.Size(10, 10)
+    # $groupBox.MaximumSize = New-Object System.Drawing.Size(10, 10)
+    $groupBox.Size = New-Object System.Drawing.Size(100, 50)
+    $controls += $groupBox
+    # 
+    $groupRadioButton1 = New-Object System.Windows.Forms.RadioButton
+    $groupRadioButton1.Text = "RadioButton 2-1"
+    $groupRadioButton1.AutoSize = $true
+    $groupRadioButton1.Add_CheckedChanged({
+        PrintControlInfo "サンプルラジオボタン2-1変更: " $this
+      })
+    # 
+    $groupRadioButton2 = New-Object System.Windows.Forms.RadioButton
+    $groupRadioButton2.Text = "RadioButton 2-2"
+    $groupRadioButton2.AutoSize = $true
+    $groupRadioButton2.Add_CheckedChanged({
+        PrintControlInfo "サンプルラジオボタン2-2変更: " $this
+      })
+    # 
+    $groupRadioButton2.Dock = [System.Windows.Forms.DockStyle]::Top
+    $groupBox.Controls.Add($groupRadioButton2)
+    $groupRadioButton1.Dock = [System.Windows.Forms.DockStyle]::Top
+    $groupBox.Controls.Add($groupRadioButton1)
+
+    # ボタンも配置してみる
+    $button = New-Object System.Windows.Forms.Button
+    $button.Text = "OK"
+    $button.AutoSize = $true
+    $button.Tag = @{Parent = $parent }
+    $button.Add_Click({
+        $this.Tag.Parent.Controls | ForEach-Object {
+          PrintControlInfo "ボタンクリック: " $_
+        }
+      })
+    $controls += $button
+  }
 
   return $controls
 }
@@ -201,7 +234,7 @@ function PrintControlInfo($prefix, $control) {
   }
 }
 
-$centerPanel = CreateDockPanel "1,Center,Dock"
+$centerPanel = CreateDockPanel "1,Center,Dock" -dummy $true
 $centerPanel.Dock = [System.Windows.Forms.DockStyle]::Fill
 $form.Controls.Add($centerPanel)
 
@@ -217,7 +250,7 @@ $leftPanel = CreateDockPanel "4,Left,Dock"
 $leftPanel.Dock = [System.Windows.Forms.DockStyle]::Left
 $form.Controls.Add($leftPanel)
 
-$rightPanel = CreateFlowPanel "5,Right,Flow"
+$rightPanel = CreateFlowPanel "5,Right,Flow" -dummy $true
 $rightPanel.Dock = [System.Windows.Forms.DockStyle]::Right
 $form.Controls.Add($rightPanel)
 
