@@ -8,7 +8,7 @@
 <CommonParameters> は、Verbose のみサポートしています。
 
 .EXAMPLE
-EditImageGui.ps1 D:\tmp\srcimage.jpg
+ImageEditForm.ps1 D:\tmp\srcimage.jpg
 #>
 
 [CmdletBinding()]

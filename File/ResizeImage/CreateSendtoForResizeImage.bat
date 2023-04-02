@@ -26,7 +26,7 @@ if errorlevel 1 (
 exit /b 0
 
 :CreateSendto2
-powershell -ExecutionPolicy RemoteSigned -File "%batdir%CreateSendto.ps1" EditImage "%batdir%EditImageWithGui.bat" " -Path"
+powershell -ExecutionPolicy RemoteSigned -File "%batdir%CreateSendto.ps1" ImageEditForm "%batdir%ImageEditForm.bat" " -Path"
 if errorlevel 1 (
   set errflag=1
 )
