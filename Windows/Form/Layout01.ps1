@@ -7,6 +7,9 @@
 エラー処理を考慮していません。
 <CommonParameters>をサポートしていません。
 
+参考
+・[コントロールのレイアウト オプション - Windows Forms .NET | Microsoft Learn](https://learn.microsoft.com/ja-jp/dotnet/desktop/winforms/controls/layout?view=netdesktop-7.0)
+
 .EXAMPLE
 Layout01.ps1
 #>
@@ -176,15 +179,22 @@ function CreateControls($parent, $title, $dummy) {
     $controls += $radioButton2
 
     # サンプルラジオボタン（グループボックスあり）
-    # グループボックスのAutoSize=$trueを設定すると大きさが非常に小さくなる。
-    # Sizeに初期サイズを設定しておくと、子コントロールに合わせて大きくなる模様。
+    # グループボックスのサイズ調整について
+    # ※ここでは縦に並べる前提
+    # 案1 AutoSize=$true
+    # ・幅が非常に小さく、子コントロールを追加しても幅が調整されない。
+    # ・高さは、子コントロールに合わせて調節してくれる模様。
+    # 案2 AutoSize=$false＆Size(Width,Height)設定
+    # ・事前に大きさが決まっていれば設定できそう。
+    # ・親コントロールに合わせて動的にサイズ調整できなかった。
+    # ・いまいち上手く設定できない（動作が不安定に感じてしまう）
+    # 案3 AutoSize=$true＆Anchor設定
+    # ・AutoSizeで高さを調整可能
+    # ・Anchorで幅を調節可能
+    # ・と思ったけど、ちょっと怪しい。
     $groupBox = New-Object System.Windows.Forms.GroupBox
     $groupBox.Text = "サンプルグループボックス"
-    # $groupBox.AutoSize = $true
-    # $groupBox.Height = 50
-    # $groupBox.MinimumSize = New-Object System.Drawing.Size(10, 10)
-    # $groupBox.MaximumSize = New-Object System.Drawing.Size(10, 10)
-    $groupBox.Size = New-Object System.Drawing.Size(100, 50)
+    # $groupBox.AutoSize = $true #案1
     $controls += $groupBox
     # 
     $groupRadioButton1 = New-Object System.Windows.Forms.RadioButton
@@ -205,7 +215,24 @@ function CreateControls($parent, $title, $dummy) {
     $groupBox.Controls.Add($groupRadioButton2)
     $groupRadioButton1.Dock = [System.Windows.Forms.DockStyle]::Top
     $groupBox.Controls.Add($groupRadioButton1)
-
+    # 案2a
+    # $groupBox.Width = $parent.Width
+    # $groupBox.Width = $groupRadioButton1.Width
+    # $groupBox.Height = $groupRadioButton1.Height * 3.5
+    # 案2b
+    # $parent.Add_SizeChanged({
+    #     $this.Controls | ForEach-Object {
+    #       if ($_ -is [System.Windows.Forms.GroupBox]) {
+    #         $_.Width = $this.Width
+    #       }
+    #     }
+    #   })
+    # 案3
+    # Anchorの書き方はどちらでもOK
+    $groupBox.Anchor = @('Left', 'Right')
+    $groupBox.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
+    $groupBox.AutoSize = $true
+    
     # ボタンも配置してみる
     $button = New-Object System.Windows.Forms.Button
     $button.Text = "OK"
