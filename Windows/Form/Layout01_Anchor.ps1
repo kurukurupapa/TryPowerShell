@@ -11,7 +11,7 @@
 ・[コントロールのレイアウト オプション - Windows Forms .NET | Microsoft Learn](https://learn.microsoft.com/ja-jp/dotnet/desktop/winforms/controls/layout?view=netdesktop-7.0)
 
 .EXAMPLE
-Layout01_Dock.ps1
+Layout01_Anchor.ps1
 #>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
