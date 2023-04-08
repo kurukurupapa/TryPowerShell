@@ -44,7 +44,6 @@ $form.Controls.Add(($textBox = New-Object System.Windows.Forms.TextBox -Property
       AutoSize  = $false # テキストボックス自身によるサイズ調整をOFF
       Multiline = $true
       Dock      = [System.Windows.Forms.DockStyle]::Fill
-      Padding   = New-Object System.Windows.Forms.Padding(5)
     }))
 
 # ラベル
@@ -53,7 +52,7 @@ $form.Controls.Add((New-Object System.Windows.Forms.Label -Property @{
       Text     = "コメント入力"
       AutoSize = $true
       Dock     = [System.Windows.Forms.DockStyle]::Top
-      Padding  = New-Object System.Windows.Forms.Padding(5)
+      Padding  = New-Object System.Windows.Forms.Padding(0, 5, 0, 0)
     }))
 
 # ラベル
@@ -62,7 +61,15 @@ $form.Controls.Add((New-Object System.Windows.Forms.Label -Property @{
       Text     = $path
       AutoSize = $true
       Dock     = [System.Windows.Forms.DockStyle]::Top
-      Padding  = New-Object System.Windows.Forms.Padding(5)
+      # Padding  = New-Object System.Windows.Forms.Padding(5)
+    }))
+
+# バックアップ先フォルダ選択ラベル
+$form.Controls.Add((New-Object System.Windows.Forms.Label -Property @{
+      Text     = "バックアップ先フォルダ"
+      AutoSize = $true
+      Dock     = [System.Windows.Forms.DockStyle]::Bottom
+      Padding  = New-Object System.Windows.Forms.Padding(0, 10, 0, 0)
     }))
 
 # バックアップ先フォルダ選択ラジオボタン
@@ -73,13 +80,16 @@ $folderArr = @(
   @{Text = "bkフォルダ"; Folder = "bk"; Checked = $false }
 )
 $folderArr | ForEach-Object {
-  $form.Controls.Add(($_.RadioButton = New-Object System.Windows.Forms.RadioButton -Property @{
-        Text     = $_.Text
-        Checked  = $_.Checked
-        AutoSize = $true
-        Dock     = [System.Windows.Forms.DockStyle]::Bottom
-        Padding  = New-Object System.Windows.Forms.Padding(5)
-      }))
+  $_.RadioButton = New-Object System.Windows.Forms.RadioButton -Property @{
+    Text     = $_.Text
+    Checked  = $_.Checked
+    AutoSize = $true
+    Dock     = [System.Windows.Forms.DockStyle]::Bottom
+  }
+  if ($_.Text -eq $folderArr[-1].Text) {
+    $_.RadioButton.Padding = New-Object System.Windows.Forms.Padding(0, 0, 0, 10)
+  }
+  $form.Controls.Add($_.RadioButton)
 }
 
 # ボタン
