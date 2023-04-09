@@ -16,7 +16,7 @@ $DebugPreference = 'Continue'; .\File\Backup\Backup.ps1 -Verbose .\File\Backup\w
 
 .\File\Backup\BackupForm.ps1
 $DebugPreference = 'Continue'; .\File\Backup\BackupForm.ps1 -Verbose .\File\Backup\work\dummy.txt
-$DebugPreference = 'Continue'; .\File\Backup\BackupForm.ps1 -Verbose .\File\Backup\work\dummy.txt .\File\Backup\work\dummy2.txt
+$DebugPreference = 'Continue'; .\File\Backup\BackupForm.ps1 -Verbose .\File\Backup\work\dummy.txt .\File\Backup\work\dummy2.txt  .\File\Backup\work\sub\dummy.txt
 $DebugPreference = 'Continue'; .\File\Backup\BackupForm.ps1 -Verbose .\File\Backup\work\dummy
 $DebugPreference = 'Continue'; .\File\Backup\BackupForm.ps1 -Verbose .\File\Backup\work\dummy\
 $DebugPreference = 'Continue'; .\File\Backup\BackupForm.ps1 -Verbose .\File\Backup\work\sub

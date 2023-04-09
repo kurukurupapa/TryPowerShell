@@ -83,9 +83,24 @@ class BackupService {
 
   # バックアップ時のコメントを書き込み
   [void] WriteLog($message) {
-    $this.BackupPathArr | ForEach-Object {
-      $logPath = Join-Path $_.OutDir $this.LogName
-      $this.LogSep, $_.OutPath, $message | Out-File $logPath -Encoding default -Append
+    # 出力ディレクトリの種類ごとにログを書き込む
+    $this.BackupPathArr | ForEach-Object { $_.OutDir } | Sort-Object -Unique | ForEach-Object {
+      # 当該ループの出力ディレクトリ
+      $outDir = $_
+      # 同一出力ディレクトリの出力パス一覧
+      $arr = $this.BackupPathArr | ForEach-Object {
+        if ($_.OutDir -eq $outDir) {
+          $_.OutPath
+        }
+      } | Sort-Object
+      # ログを書き込み
+      $logPath = Join-Path $outDir $this.LogName
+      $logMessage = @()
+      $logMessage += $this.LogSep
+      $logMessage += $arr
+      $logMessage += $message
+      $logMessage | Out-File $logPath -Encoding default -Append
+      Write-Verbose "ログを書き込みました。${logPath}"
     }
   }
 }
