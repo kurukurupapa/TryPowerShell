@@ -1,86 +1,89 @@
+# バックアップパスクラス
+class BackupPath {
+  $InPath = $null
+  $InDir = $null
+  $InName = $null
+  $OutPath = $null
+  $OutDir = $null
+  $OutName = $null
+
+  BackupPath($inPath) {
+    # 末尾が区切り文字なら除去
+    $this.InPath = $inPath -replace "\\+$", ""
+    # 分解しておく
+    $this.InDir = Split-Path $this.InPath -Parent
+    $this.InName = Split-Path $this.InPath -Leaf
+  }
+
+  # バックアップ実行
+  # $folder - バックアップ先フォルダ。バックアップ対象と同じフォルダの場合"."。
+  [void] Backup($folder) {
+    $this.MakeOutPath($folder)
+
+    # コピー先ディレクトリ作成
+    if (!(Test-Path $this.OutDir -PathType container)) {
+      New-Item $this.OutDir -ItemType Directory
+    }
+
+    # コピー先チェック
+    if (Test-Path $this.OutPath) {
+      throw "バックアップ先パスが存在します。$($this.OutPath)"
+    }
+
+    # コピー実施
+    Copy-Item $this.InPath -Destination $this.OutPath -Recurse
+    Write-Verbose "バックアップしました。$($this.OutPath)"
+  }
+
+  # バックアップパスを組み立て
+  [void] hidden MakeOutPath($folder) {
+    # 出力パスの組み立て
+    $this.OutDir = Join-Path $this.InDir $folder
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    if (Test-Path $this.InPath -PathType container) {
+      # フォルダ
+      $this.OutName = "$($this.InName)_bk${timestamp}"
+    }
+    elseif (Test-Path $this.InPath -PathType leaf) {
+      if ($this.InPath -match "\.[^\.\\]*$") {
+        # ファイル・拡張子あり
+        $this.OutName = $this.InName -replace "^(.*)(\.[^\.\\]*)$", "`$1_bk${timestamp}`$2"
+      }
+      else {
+        # ファイル・拡張子なし
+        $this.OutName = "$($this.InName)_bk${timestamp}"
+      }
+    }
+    else {
+      throw "対象ファイル/フォルダが見つかりません。$($this.InPath)"
+    }
+    $this.OutPath = Join-Path $this.OutDir $this.OutName
+  }
+}
+
 # バックアップサービスクラス
 class BackupService {
-  $InPathArr = $null
-  $OutHashArr = $null
+  $BackupPathArr = $null
   hidden $LogName = "BackupLog.txt"
   hidden $LogSep = "-" * 80
   
   BackupService($inPathArr) {
-    $this.InPathArr = $inPathArr
+    $this.BackupPathArr = $inPathArr | ForEach-Object {
+      [BackupPath]::new($_)
+    }
   }
 
   # バックアップ実行
   # $outFolder - バックアップ先フォルダ。バックアップ対象と同じフォルダの場合"."。
   [void] Run($outFolder) {
-    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-    $this.OutHashArr = $this.InPathArr | ForEach-Object {
-      $this.GetOutHash($_, $outFolder, $timestamp)
-    }
-    $this.OutHashArr | ForEach-Object {
-      $this.Backup($_)
+    $this.BackupPathArr | ForEach-Object {
+      $_.Backup($outFolder)
     }
   }
 
-  # バックアップパスを組み立て
-  [Hashtable] hidden GetOutHash($inPath, $outFolder, $timestamp) {
-    # 入力パスの整形
-    # 末尾が区切り文字なら除去
-    $inPath = $inPath -replace "\\+$", ""
-    # 分解しておく
-    $inDir = Split-Path $inPath -Parent
-    $inName = Split-Path $inPath -Leaf
-
-    # 出力パスの組み立て
-    $outDir = Join-Path $inDir $outFolder
-    if (Test-Path $inPath -PathType container) {
-      # フォルダ
-      $outName = "${inName}_bk${timestamp}"
-    }
-    elseif (Test-Path $inPath -PathType leaf) {
-      if ($inPath -match "\.[^\.\\]*$") {
-        # ファイル・拡張子あり
-        $outName = $inName -replace "^(.*)(\.[^\.\\]*)$", "`$1_bk${timestamp}`$2"
-      }
-      else {
-        # ファイル・拡張子なし
-        $outName = "${inName}_bk${timestamp}"
-      }
-    }
-    else {
-      throw "対象ファイル/フォルダが見つかりません。${inPath}"
-    }
-    $outPath = Join-Path $outDir $outName
-
-    return @{
-      InPath  = $inPath;
-      InDir   = $inDir;
-      InName  = $inName;
-      OutPath = $outPath;
-      OutDir  = $outDir;
-      OutName = $outName;
-    }
-  }
-
-  # バックアップ実行
-  [void] hidden Backup($outHash) {
-    # コピー先ディレクトリ作成
-    if (!(Test-Path $outHash.OutDir -PathType container)) {
-      New-Item $outHash.OutDir -ItemType Directory
-    }
-
-    # コピー先チェック
-    if (Test-Path $outHash.OutPath) {
-      throw "バックアップ先パスが存在します。$($outHash.OutPath)"
-    }
-
-    # コピー実施
-    Copy-Item $outHash.InPath -Destination $outHash.OutPath -Recurse
-    Write-Verbose "バックアップしました。$($outHash.OutPath)"
-  }
-  
   # バックアップ時のコメントを書き込み
   [void] WriteLog($message) {
-    $this.OutHashArr | ForEach-Object {
+    $this.BackupPathArr | ForEach-Object {
       $logPath = Join-Path $_.OutDir $this.LogName
       $this.LogSep, $_.OutPath, $message | Out-File $logPath -Encoding default -Append
     }
