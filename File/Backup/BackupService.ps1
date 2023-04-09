@@ -1,67 +1,88 @@
 # バックアップサービスクラス
 class BackupService {
-  $inDir
-  $inName
-  $inPath
-  $outDir
-  $outName
-  $outPath
-  $logName = "BackupLog.txt"
-  $logSep = "-" * 80
+  $InPathArr = $null
+  $OutHashArr = $null
+  hidden $LogName = "BackupLog.txt"
+  hidden $LogSep = "-" * 80
   
-  BackupService($inPath) {
-    # 末尾が区切り文字なら除去
-    $this.inPath = $inPath -replace "\\+$", ""
-    # 分解しておく
-    $this.inDir = Split-Path $this.inPath -Parent
-    $this.inName = Split-Path $this.inPath -Leaf
-  }
-
-  # バックアップパスを組み立て
-  # $folder - バックアップ先フォルダ。バックアップ対象と同じフォルダの場合"."。
-  [void] MakeOutPath($folder) {
-    $this.outDir = Join-Path $this.inDir $folder
-    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-    if (Test-Path $this.inPath -PathType container) {
-      # フォルダ
-      $this.outName = "$($this.inName)_bk${timestamp}"
-    }
-    elseif (Test-Path $this.inPath -PathType leaf) {
-      if ($this.inPath -match "\.[^\.\\]*$") {
-        # ファイル・拡張子あり
-        $this.outName = $this.inName -replace "^(.*)(\.[^\.\\]*)$", "`$1_bk${timestamp}`$2"
-      }
-      else {
-        # ファイル・拡張子なし
-        $this.outName = "$($this.inName)_bk${timestamp}"
-      }
-    }
-    else {
-      throw "対象ファイル/フォルダが見つかりません。$($this.inPath)"
-    }
-    $this.outPath = Join-Path $this.outDir $this.outName
+  BackupService($inPathArr) {
+    $this.InPathArr = $inPathArr
   }
 
   # バックアップ実行
-  [void] Backup() {
+  # $outFolder - バックアップ先フォルダ。バックアップ対象と同じフォルダの場合"."。
+  [void] Run($outFolder) {
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $this.OutHashArr = $this.InPathArr | ForEach-Object {
+      $this.GetOutHash($_, $outFolder, $timestamp)
+    }
+    $this.OutHashArr | ForEach-Object {
+      $this.Backup($_)
+    }
+  }
+
+  # バックアップパスを組み立て
+  [Hashtable] hidden GetOutHash($inPath, $outFolder, $timestamp) {
+    # 入力パスの整形
+    # 末尾が区切り文字なら除去
+    $inPath = $inPath -replace "\\+$", ""
+    # 分解しておく
+    $inDir = Split-Path $inPath -Parent
+    $inName = Split-Path $inPath -Leaf
+
+    # 出力パスの組み立て
+    $outDir = Join-Path $inDir $outFolder
+    if (Test-Path $inPath -PathType container) {
+      # フォルダ
+      $outName = "${inName}_bk${timestamp}"
+    }
+    elseif (Test-Path $inPath -PathType leaf) {
+      if ($inPath -match "\.[^\.\\]*$") {
+        # ファイル・拡張子あり
+        $outName = $inName -replace "^(.*)(\.[^\.\\]*)$", "`$1_bk${timestamp}`$2"
+      }
+      else {
+        # ファイル・拡張子なし
+        $outName = "${inName}_bk${timestamp}"
+      }
+    }
+    else {
+      throw "対象ファイル/フォルダが見つかりません。${inPath}"
+    }
+    $outPath = Join-Path $outDir $outName
+
+    return @{
+      InPath  = $inPath;
+      InDir   = $inDir;
+      InName  = $inName;
+      OutPath = $outPath;
+      OutDir  = $outDir;
+      OutName = $outName;
+    }
+  }
+
+  # バックアップ実行
+  [void] hidden Backup($outHash) {
     # コピー先ディレクトリ作成
-    if (!(Test-Path $this.outDir -PathType container)) {
-      New-Item $this.outDir -ItemType Directory
+    if (!(Test-Path $outHash.OutDir -PathType container)) {
+      New-Item $outHash.OutDir -ItemType Directory
     }
 
     # コピー先チェック
-    if (Test-Path $this.outPath) {
-      throw "バックアップ先パスが存在します。$($this.outPath)"
+    if (Test-Path $outHash.OutPath) {
+      throw "バックアップ先パスが存在します。$($outHash.OutPath)"
     }
 
     # コピー実施
-    Copy-Item $this.inPath -Destination $this.outPath -Recurse
-    Write-Verbose "バックアップしました。$($this.outPath)"
+    Copy-Item $outHash.InPath -Destination $outHash.OutPath -Recurse
+    Write-Verbose "バックアップしました。$($outHash.OutPath)"
   }
   
   # バックアップ時のコメントを書き込み
   [void] WriteLog($message) {
-    $logPath = Join-Path $this.outDir $this.logName
-    $this.logSep, $this.outPath, $message | Out-File $logPath -Encoding default -Append
+    $this.OutHashArr | ForEach-Object {
+      $logPath = Join-Path $_.OutDir $this.LogName
+      $this.LogSep, $_.OutPath, $message | Out-File $logPath -Encoding default -Append
+    }
   }
 }

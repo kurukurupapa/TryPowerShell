@@ -14,7 +14,8 @@ BackupForm.ps1 D:\tmp
 
 [CmdletBinding()]
 param (
-  [string]$path
+  [Parameter(ValueFromRemainingArguments)]
+  [string[]]$PathArr
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
@@ -25,7 +26,7 @@ Add-Type -AssemblyName System.Windows.Forms
 . (Join-Path $psDir "BackupService.ps1")
 
 # ヘルプ
-if (!$path) {
+if (!$PathArr) {
   Get-Help $MyInvocation.InvocationName -Detailed
   return
 }
@@ -58,7 +59,7 @@ $form.Controls.Add((New-Object System.Windows.Forms.Label -Property @{
 # ラベル
 # ※Top設定は後勝ち。当ラベルは上から1番目に表示。
 $form.Controls.Add((New-Object System.Windows.Forms.Label -Property @{
-      Text     = $path
+      Text     = $PathArr -join "`n"
       AutoSize = $true
       Dock     = [System.Windows.Forms.DockStyle]::Top
       # Padding  = New-Object System.Windows.Forms.Padding(5)
@@ -109,10 +110,14 @@ $button.Add_Click({
     }
 
     # バックアップ実施
-    $service = New-Object BackupService($path)
-    $service.MakeOutPath($folder)
-    $service.Backup()
-    $service.WriteLog($textBox.Text)
+    # New-Objectの場合、配列の要素数分の引数として扱われてエラーになった。
+    # $service = New-Object BackupService($PathArr)
+    $service = [BackupService]::new($PathArr)
+    $service.Run($folder)
+    $message = $textBox.Text.Trim()
+    if ($message) {
+      $service.WriteLog($message)
+    }
 
     # フォームを閉じる
     $form.Close()
