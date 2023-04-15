@@ -18,7 +18,6 @@ $ErrorActionPreference = "Stop"
 $psName = Split-Path $MyInvocation.InvocationName -Leaf
 $psBaseName = $psName -replace "\.ps1$", ""
 Add-Type -AssemblyName System.Windows.Forms
-Write-Host $psName
 
 # ÉtÉHÅ[ÉÄ
 $form = New-Object System.Windows.Forms.Form
