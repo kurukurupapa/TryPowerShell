@@ -4,23 +4,21 @@
 
 .DESCRIPTION
 このスクリプトは、PowerShellで、かんたんなHTTPサーバを起動します。
-実行には管理者権限が必要です。
 エラー処理は、考慮していません。
 <CommonParameters> は、サポートしていません。
 
 .EXAMPLE
-TryHttpServer.ps1 localhost 8000 -Verbose
+TryHttpServer.ps1
+powershell -ExecutionPolicy RemoteSigned -File TryHttpServer.ps1 localhost 8000 -Verbose
 #>
 
 [CmdletBinding()]
 Param(
-  [string]$hostName,
-  [int]$port
+  [string]$hostName = "localhost",
+  [int]$port = 8000
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-#$VerbosePreference = 'Continue'
-#$VerbosePreference = 'SilentlyContinue'
 #$psDir = Convert-Path $(Split-Path $MyInvocation.InvocationName -Parent)
 $psName = Split-Path $MyInvocation.InvocationName -Leaf
 #$psBaseName = $psName -replace ("\.ps1$", "")
@@ -35,16 +33,17 @@ if (!$hostName -and !$port) {
 # 処理開始
 Write-Verbose "$psName Start"
 
+$url = "http://${hostName}:${port}/"
 $listener = New-Object Net.HttpListener
-$listener.Prefixes.Add("http://${hostName}:${port}/")
+$listener.Prefixes.Add($url)
 $listener.Start()
-Write-Verbose "起動 http://${hostName}:${port}/"
+Write-Output "起動 ${url}"
 while ($true) {
   # 待機
   $context = $listener.GetContext()
 
   # 受信・送信
-  Write-Verbose("受信 Method=$($context.Request.HttpMethod), Url=$($context.Request.RawUrl), Query=$($context.Request.QueryString)")
+  Write-Verbose "受信 Method=$($context.Request.HttpMethod), Url=$($context.Request.RawUrl)"
   $response = $context.Response
   $response.ContentType = "text/plain"
   $content = [System.Text.Encoding]::UTF8.GetBytes("Hello World!")
