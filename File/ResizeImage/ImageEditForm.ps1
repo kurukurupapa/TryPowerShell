@@ -13,7 +13,8 @@ ImageEditForm.ps1 D:\tmp\srcimage.jpg
 
 [CmdletBinding()]
 param(
-  [String]$path
+  [String]$Path,
+  [switch]$Help = $false
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
@@ -23,16 +24,13 @@ $psBaseName = $psName -replace "\.ps1$", ""
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms
 . (Join-Path $psDir "CustomImage.ps1")
+. (Join-Path $psDir "ImageService.ps1")
 
 # ヘルプ
-if (!$path) {
+if ($Help) {
   Get-Help $MyInvocation.MyCommand.Path -Detailed
   return
 }
-
-# 画像読み込み
-$imageObj = New-Object CustomImage($path)
-$imageObj.Load()
 
 # フォーム
 $form = New-Object System.Windows.Forms.Form
@@ -40,7 +38,6 @@ $form.Text = $psBaseName
 
 # 画像ボックス
 $imageBox = New-Object Windows.Forms.PictureBox
-$imageBox.Image = $imageObj.Image
 $imageBox.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
 # 親コントロールとの調整
 $imageBox.Dock = [System.Windows.Forms.DockStyle]::Fill
@@ -53,6 +50,28 @@ $buttonPanel.FlowDirection = [System.Windows.Forms.FlowDirection]::TopDown
 # 親コントロールとの調整
 $buttonPanel.Dock = [System.Windows.Forms.DockStyle]::Right
 $form.Controls.Add($buttonPanel)
+
+# ファイル読み込みボタン
+$loadFileButton = New-Object System.Windows.Forms.Button
+$loadFileButton.AutoSize = $true
+$loadFileButton.Text = "ファイル読み込み"
+$loadFileButton.Add_Click({
+    $ImageService.LoadFileWithDialog()
+  })
+# 親コントロールとの調整
+$loadFileButton.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
+$buttonPanel.Controls.Add($loadFileButton)
+
+# クリップボード読み込みボタン
+$loadClipboardButton = New-Object System.Windows.Forms.Button
+$loadClipboardButton.AutoSize = $true
+$loadClipboardButton.Text = "クリップボード読み込み"
+$loadClipboardButton.Add_Click({
+    $ImageService.LoadClipboard()
+  })
+# 親コントロールとの調整
+$loadClipboardButton.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
+$buttonPanel.Controls.Add($loadClipboardButton)
 
 # リサイズボタン
 $sizeArr = @(
@@ -70,10 +89,9 @@ for ($i = 0; $i -lt $sizeArr.Length; $i++) {
   $resizeButton.Text = "リサイズ ${w}x${h}"
   $resizeButton.Tag = $i
   $resizeButton.Add_Click({
-    $w, $h, $comment, $tmp = $sizeArr[$this.Tag]
-    $imageObj.Resize($w, $h)
-    $imageBox.Image = $imageObj.Image
-  })
+      $w, $h, $comment, $tmp = $sizeArr[$this.Tag]
+      $ImageService.Resize($w, $h)
+    })
   # 親コントロールとの調整
   $resizeButton.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
   $buttonPanel.Controls.Add($resizeButton)
@@ -91,10 +109,9 @@ for ($i = 0; $i -lt $frameArr.Length; $i++) {
   $frameButton.Text = "フレーム $($color.Name) ${size}px"
   $frameButton.Tag = $i
   $frameButton.Add_Click({
-    $color, $size = $frameArr[$this.Tag]
-    $imageObj.DrawFrame($color, $size)
-    $imageBox.Image = $imageObj.Image
-  })
+      $color, $size = $frameArr[$this.Tag]
+      $ImageService.DrawFrame($color, $size)
+    })
   # 親コントロールとの調整
   $frameButton.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
   $buttonPanel.Controls.Add($frameButton)
@@ -105,9 +122,8 @@ $resetButton = New-Object System.Windows.Forms.Button
 $resetButton.AutoSize = $true
 $resetButton.Text = "リセット"
 $resetButton.Add_Click({
-  $imageObj.Load()
-  $imageBox.Image = $imageObj.Image
-})
+    $ImageService.Reset()
+  })
 # 親コントロールとの調整
 $resetButton.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
 $buttonPanel.Controls.Add($resetButton)
@@ -117,9 +133,8 @@ $clipboardButton = New-Object System.Windows.Forms.Button
 $clipboardButton.AutoSize = $true
 $clipboardButton.Text = "クリップボードへ"
 $clipboardButton.Add_Click({
-  [System.Windows.Forms.Clipboard]::SetImage($imageObj.Image)
-  Write-Verbose "クリップボードにコピーしました。"
-})
+    $ImageService.SaveClipboard()
+  })
 # 親コントロールとの調整
 $clipboardButton.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
 $buttonPanel.Controls.Add($clipboardButton)
@@ -129,16 +144,8 @@ $saveButton = New-Object System.Windows.Forms.Button
 $saveButton.AutoSize = $true
 $saveButton.Text = "保存"
 $saveButton.Add_Click({
-  $dialog = New-Object System.Windows.Forms.SaveFileDialog
-  $dialog.Filter = "画像ファイル（*$($imageObj.Extension)）|*$($imageObj.Extension)|すべてのファイル（*.*）|*.*"
-  $dialog.InitialDirectory = $imageObj.Dir
-  $dialog.FileName = $imageObj.FileName
-  $result = $dialog.ShowDialog()
-  if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
-    $savePath = $dialog.FileName
-    $imageObj.Save($savePath)
-  }
-})
+    $ImageService.SaveFileWithDialog()
+  })
 # 親コントロールとの調整
 $saveButton.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
 $buttonPanel.Controls.Add($saveButton)
@@ -148,15 +155,16 @@ $closeButton = New-Object System.Windows.Forms.Button
 $closeButton.AutoSize = $true
 $closeButton.Text = "閉じる"
 $closeButton.Add_Click({
-  $form.Close()
-})
+    $form.Close()
+  })
 # 親コントロールとの調整
 $closeButton.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
 $buttonPanel.Controls.Add($closeButton)
 
 # 表示
+$ImageService = New-Object ImageService($imageBox, $Path)
 $form.ShowDialog() | Out-Null
 
 # 後片付け
 $form.Dispose()
-$imageObj.Dispose()
+$ImageService.Dispose()

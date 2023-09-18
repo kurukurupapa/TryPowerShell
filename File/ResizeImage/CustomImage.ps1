@@ -9,21 +9,49 @@ class CustomImage {
   $Dir
   $FileName
   $Extension
+  $OriginalImage
   $Image
 
-  CustomImage($path) {
-    $this.Path = $path
-    $this.Dir = Split-Path $path -Parent
-    $this.FileName = Split-Path $path -Leaf
-    #$this.Extension = Split-Path $path -Extension # PowerShell 6.0 以降
-    $this.Extension = [System.IO.Path]::GetExtension($path)
+  CustomImage() {
+    $this._SetDummyImage()
+  }
+
+  CustomImage([string]$path) {
+    $this._Load($path)
+  }
+
+  CustomImage([System.Drawing.Bitmap]$image) {
+    $this._SetOriginalImage($image)
+  }
+
+  [void] _SetDummyImage() {
+    $tmp = [System.Drawing.Bitmap]::new(320, 240)
+    $g = [System.Drawing.Graphics]::FromImage($tmp)
+    $brush = [System.Drawing.Brushes]::White
+    $g.FillRectangle($brush, 0, 0, $tmp.Width, $tmp.Height)
+    $g.Dispose()
+    $this._SetOriginalImage($tmp)
+  }
+
+  [void] _SetOriginalImage($image) {
+    $this.Dispose()
+    $this.OriginalImage = $image.Clone()
+    $this.Image = $image
+    Write-Verbose "入力サイズ：$($this.Image.Width), $($this.Image.Height)"
   }
 
   # 画像読み込み
-  [void] Load() {
+  [void] _Load($srcpath) {
     $this.Dispose()
-    $this.Image = [System.Drawing.Bitmap]::FromFile($this.Path)
-    Write-Verbose "入力サイズ：$($this.Image.Width), $($this.Image.Height)"
+
+    $this.Path = $srcpath
+    $this.Dir = Split-Path $srcpath -Parent
+    $this.FileName = Split-Path $srcpath -Leaf
+    #$this.Extension = Split-Path $srcpath -Extension # PowerShell 6.0 以降
+    $this.Extension = [System.IO.Path]::GetExtension($srcpath)
+
+    $tmp = [System.Drawing.Bitmap]::FromFile($srcpath)
+    $this._SetOriginalImage($tmp)
   }
 
   # 画像保存
@@ -31,8 +59,21 @@ class CustomImage {
     #$destpath = $path -replace "(.*)(\..*?)", "`$1_${w}x${h}`$2"
     #$timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
     #$destpath = $this.Path -replace "(.*)(\..*?)", "`$1_${timestamp}`$2"
-    $this.Image.Save($destpath, $this.Image.RawFormat.Guid)
-    Write-Verbose "保存しました。${destpath}"
+    $format = $this.Image.RawFormat.Guid
+    switch ([System.IO.Path]::GetExtension($destpath)) {
+      '.bmp' { $format = [System.Drawing.Imaging.ImageFormat]::Bmp }
+      '.gif' { $format = [System.Drawing.Imaging.ImageFormat]::Gif }
+      '.jpeg' { $format = [System.Drawing.Imaging.ImageFormat]::Jpeg }
+      '.jpg' { $format = [System.Drawing.Imaging.ImageFormat]::Jpeg }
+      '.png' { $format = [System.Drawing.Imaging.ImageFormat]::Png }
+    }
+    $this.Image.Save($destpath, $format)
+    Write-Verbose "保存しました。${destpath}, ${format}"
+  }
+
+  [void] Reset() {
+    $this.SetWorkImage($this.OriginalImage.Clone())
+    Write-Verbose "リセット：$($this.Image.Width), $($this.Image.Height)"
   }
 
   # リサイズ
@@ -44,7 +85,7 @@ class CustomImage {
     $g = [System.Drawing.Graphics]::FromImage($destImage)
     $g.DrawImage($this.Image, 0, 0, $w, $h)
     $g.Dispose()
-    $this.SetImage($destImage)
+    $this.SetWorkImage($destImage)
     Write-Verbose "リサイズ：${w}, ${h}"
   }
 
@@ -57,13 +98,15 @@ class CustomImage {
     Write-Verbose "フレーム描画：$($color.Name), ${size}px"
   }
 
-  [void] SetImage($image) {
-    $this.Dispose()
+  [void] SetWorkImage($image) {
+    $this.Image.Dispose()
     $this.Image = $image
   }
 
   [void] Dispose() {
     if ($this.Image) {
+      $this.OriginalImage.Dispose()
+      $this.OriginalImage = $null
       $this.Image.Dispose()
       $this.Image = $null
     }
