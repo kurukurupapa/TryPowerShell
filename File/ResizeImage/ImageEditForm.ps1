@@ -35,6 +35,8 @@ if ($Help) {
 # フォーム
 $form = New-Object System.Windows.Forms.Form
 $form.Text = $psBaseName
+$form.Width = 800
+$form.Height = 600
 
 # 画像ボックス
 $imageBox = New-Object Windows.Forms.PictureBox
@@ -116,6 +118,28 @@ for ($i = 0; $i -lt $frameArr.Length; $i++) {
   $frameButton.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
   $buttonPanel.Controls.Add($frameButton)
 }
+
+# グレースケールボタン（色成分の平均値を計算する方法）
+$grayButton = New-Object System.Windows.Forms.Button
+$grayButton.AutoSize = $true
+$grayButton.Text = "グレースケール変換（平均値）"
+$grayButton.Add_Click({
+    $ImageService.ConvertToGrayByAverage()
+  })
+# 親コントロールとの調整
+$grayButton.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
+$buttonPanel.Controls.Add($grayButton)
+
+# グレースケールボタン（ColorMatrixクラスを使用する方法）
+$grayButton2 = New-Object System.Windows.Forms.Button
+$grayButton2.AutoSize = $true
+$grayButton2.Text = "グレースケール変換（Matrix）"
+$grayButton2.Add_Click({
+    $ImageService.ConvertToGrayByMatrix()
+  })
+# 親コントロールとの調整
+$grayButton2.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
+$buttonPanel.Controls.Add($grayButton2)
 
 # リセットボタン
 $resetButton = New-Object System.Windows.Forms.Button

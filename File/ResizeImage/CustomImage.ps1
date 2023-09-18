@@ -12,6 +12,21 @@ class CustomImage {
   $OriginalImage
   $Image
 
+  static [CustomImage] FromDummy() {
+    $obj = New-Object CustomImage
+    return $obj
+  }
+
+  static [CustomImage] FromFile([string]$path) {
+    $obj = New-Object CustomImage($path)
+    return $obj
+  }
+
+  static [CustomImage] FromImage([System.Drawing.Bitmap]$image) {
+    $obj = New-Object CustomImage($image)
+    return $obj
+  }
+
   CustomImage() {
     $this._SetDummyImage()
   }
@@ -96,6 +111,48 @@ class CustomImage {
     $g.DrawRectangle($pen, 0, 0, $this.Image.Width - 1, $this.Image.Height - 1)
     $g.Dispose()
     Write-Verbose "フレーム描画：$($color.Name), ${size}px"
+  }
+
+  # グレースケール変換（色成分の平均値を計算する方法）
+  # TODO 処理が重いのでBitmap.LockBitsメソッドを使った方がいいかも。
+  # 参考：[画像のカラーバランスを補正して表示する - .NET Tips (VB.NET,C#...)](https://dobon.net/vb/dotnet/graphics/colorbalance.html)
+  [void] ConvertToGrayByAverage() {
+    for ($x = 0; $x -lt $this.Image.Width; $x++) {
+      for ($y = 0; $y -lt $this.Image.Height; $y++) {
+        $pixel = $this.Image.GetPixel($x, $y)
+        $gray  = [Math]::Round([Byte](($pixel.R + $pixel.G + $pixel.B) / 3))
+        $color = [System.Drawing.Color]::FromArgb($gray, $gray, $gray)
+        $this.Image.SetPixel($x, $y, $color)
+      }
+    }
+    Write-Verbose "グレースケール変換（色成分の平均値を計算する方法）"
+  }
+
+  # グレースケール変換（ColorMatrixクラスを使用する方法）
+  # 参考：[画像をグレースケールに変換して表示する - .NET Tips (VB.NET,C#...)](https://dobon.net/vb/dotnet/graphics/grayscale.html)
+  [void] ConvertToGrayByMatrix() {
+    # ColorMatrixオブジェクトの作成
+    # グレースケールに変換するための行列を指定する
+    $cm = [System.Drawing.Imaging.ColorMatrix]::new(@(
+        @(0.299, 0.299, 0.299, 0, 0),
+        @(0.587, 0.587, 0.587, 0, 0),
+        @(0.114, 0.114, 0.114, 0, 0),
+        @(0, 0, 0, 1, 0),
+        @(0, 0, 0, 0, 1)))
+
+    # ImageAttributesオブジェクトの作成
+    $ia = New-Object System.Drawing.Imaging.ImageAttributes
+    $ia.SetColorMatrix($cm)
+
+    # ImageAttributesを使用してグレースケールを描画
+    $g = [System.Drawing.Graphics]::FromImage($this.Image)
+    $g.DrawImage(
+      $this.Image,
+      [System.Drawing.Rectangle]::new(0, 0, $this.Image.Width, $this.Image.Height),
+      0, 0, $this.Image.Width, $this.Image.Height,
+      [System.Drawing.GraphicsUnit]::Pixel, $ia)
+    $g.Dispose()
+    Write-Verbose "グレースケール変換（ColorMatrixクラスを使用する方法）"
   }
 
   [void] SetWorkImage($image) {

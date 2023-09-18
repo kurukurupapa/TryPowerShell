@@ -18,6 +18,16 @@ class ImageService {
     $this.ImageBox.Image = $this.CustomImage.Image
   }
 
+  [void] ConvertToGrayByAverage() {
+    $this.CustomImage.ConvertToGrayByAverage()
+    $this.ImageBox.Image = $this.CustomImage.Image
+  }
+
+  [void] ConvertToGrayByMatrix() {
+    $this.CustomImage.ConvertToGrayByMatrix()
+    $this.ImageBox.Image = $this.CustomImage.Image
+  }
+
   [void] Dispose() {
     $this.CustomImage.Dispose()
   }
