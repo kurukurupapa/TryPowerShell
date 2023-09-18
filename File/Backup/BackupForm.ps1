@@ -37,6 +37,7 @@ $form = New-Object System.Windows.Forms.Form -Property @{
   Width   = 480
   Height  = 320
   Padding = New-Object System.Windows.Forms.Padding(10)
+  StartPosition = "CenterScreen"
 }
 
 # テキストボックス
@@ -74,6 +75,7 @@ $form.Controls.Add((New-Object System.Windows.Forms.Label -Property @{
     }))
 
 # バックアップ先フォルダ選択ラジオボタン
+# TODO backup,bak,bkフォルダの有無に従って初期選択を変えたい。
 $folderArr = @(
   @{Text = "同一フォルダ"; Folder = "."; Checked = $true },
   @{Text = "backupフォルダ"; Folder = "backup"; Checked = $false },
