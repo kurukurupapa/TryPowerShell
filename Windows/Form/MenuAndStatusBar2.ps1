@@ -7,13 +7,13 @@
 エラー処理を考慮していません。
 <CommonParameters>をサポートしていません。
 
-ここでは、メニューの実装に MainMenu クラスを使っています。
-このクラスは .NET Core 3.1 以降のバージョンでは利用できず、代わりに、MenuStrip を使用するようです。
+ここでは、メニューの実装に MenuStrip クラスを使っています。
+MenuStrip は、MainMenu を置き換える最上位レベルのコンテナーです。
 参考
-[MainMenu クラス (System.Windows.Forms) | Microsoft Learn](https://learn.microsoft.com/ja-jp/dotnet/api/system.windows.forms.mainmenu?view=netframework-4.5)
+[MenuStrip クラス (System.Windows.Forms) | Microsoft Learn](https://learn.microsoft.com/ja-jp/dotnet/api/system.windows.forms.menustrip?view=netframework-4.5)
 
 .EXAMPLE
-MenuAndStatusBar.ps1
+MenuAndStatusBar2.ps1
 #>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
@@ -27,41 +27,41 @@ $Form.Text = $PsBaseName
 $Form.Size = New-Object System.Drawing.Size(320, 240)
 
 # メニューを作成
-$MainMenu = New-Object System.Windows.Forms.MainMenu
-$Form.Menu = $MainMenu
+$MainMenu = New-Object System.Windows.Forms.MenuStrip
 
 # Fileメニュー項目を作成
-$MenuItem1 = New-Object System.Windows.Forms.MenuItem
+$MenuItem1 = New-Object System.Windows.Forms.ToolStripMenuItem
 $MenuItem1.Text = "File"
 
 # Fileメニューのサブメニュー項目を作成
-$SubMenuItem11 = New-Object System.Windows.Forms.MenuItem
+$SubMenuItem11 = New-Object System.Windows.Forms.ToolStripMenuItem
 $SubMenuItem11.Text = "Open"
 
-$SubMenuItem12 = New-Object System.Windows.Forms.MenuItem
+$SubMenuItem12 = New-Object System.Windows.Forms.ToolStripMenuItem
 $SubMenuItem12.Text = "Close"
 
 # Editメニュー項目を作成
-$MenuItem2 = New-Object System.Windows.Forms.MenuItem
+$MenuItem2 = New-Object System.Windows.Forms.ToolStripMenuItem
 $MenuItem2.Text = "Edit"
 
 # Editメニューのサブメニュー項目を作成
-$SubMenuItem21 = New-Object System.Windows.Forms.MenuItem
+$SubMenuItem21 = New-Object System.Windows.Forms.ToolStripMenuItem
 $SubMenuItem21.Text = "Cut"
+$SubMenuItem21.ShortcutKeys = @([System.Windows.Forms.Keys]::Control, [System.Windows.Forms.Keys]::X)
+$SubMenuItem21.Add_Click({
+    Write-Host "Cut Menu"
+  })
 
-$SubMenuItem22 = New-Object System.Windows.Forms.MenuItem
+$SubMenuItem22 = New-Object System.Windows.Forms.ToolStripMenuItem
 $SubMenuItem22.Text = "Copy"
+$SubMenuItem22.ShortcutKeys = @([System.Windows.Forms.Keys]::Control, [System.Windows.Forms.Keys]::C)
+$SubMenuItem22.Add_Click({
+    Write-Host "Copy Menu"
+  })
 
-# Addだとインデックス番号が返却され標準出力されるので、Out-Nullで捨てる。
-# $MenuItem1.MenuItems.Add($SubMenuItem11) | Out-Null
-# $MenuItem1.MenuItems.Add($SubMenuItem12) | Out-Null
-# $MenuItem2.MenuItems.Add($SubMenuItem21) | Out-Null
-# $MenuItem2.MenuItems.Add($SubMenuItem22) | Out-Null
-# $MainMenu.MenuItems.Add($MenuItem1) | Out-Null
-# $MainMenu.MenuItems.Add($MenuItem2) | Out-Null
-$MenuItem1.MenuItems.AddRange(@($SubMenuItem11, $SubMenuItem12))
-$MenuItem2.MenuItems.AddRange(@($SubMenuItem21, $SubMenuItem22))
-$MainMenu.MenuItems.AddRange(@($MenuItem1, $MenuItem2))
+$MenuItem1.DropDownItems.AddRange(@($SubMenuItem11, $SubMenuItem12))
+$MenuItem2.DropDownItems.AddRange(@($SubMenuItem21, $SubMenuItem22))
+$MainMenu.Items.AddRange(@($MenuItem1, $MenuItem2))
 
 # ダミー
 $CenterButton = New-Object System.Windows.Forms.Button
@@ -83,6 +83,11 @@ $BottomButton = New-Object System.Windows.Forms.Button
 $BottomButton.Text = "Bottom"
 $BottomButton.Dock = [System.Windows.Forms.DockStyle]::Bottom
 $Form.Controls.Add($BottomButton)
+
+# メニュー
+# Dock=Topとなるので、最後に追加する必要あり。
+$Form.Controls.Add($MainMenu)
+Write-Host "MainMenu: $($MainMenu.Dock)"
 
 # ステータスバー
 # Dock=Botomとなるので、最後に追加する必要あり。
