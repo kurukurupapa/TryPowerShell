@@ -9,6 +9,7 @@
 
 .EXAMPLE
 Control01.ps1
+Windows/Form/Control01.ps1
 #>
 Add-Type -AssemblyName System.Windows.Forms
 $groupMargin = New-Object System.Windows.Forms.Padding(3, 20, 3, 0)

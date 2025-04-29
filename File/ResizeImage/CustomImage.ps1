@@ -106,16 +106,18 @@ class CustomImage {
 
   # クリップ
   [void] ClipWithOffset($offsetLeft, $offsetTop, $offsetRight, $offsetBottom) {
-    # TODO サイズがマイナスになる場合のエラー処理を追加
     $w = $this.Image.Width - $offsetLeft - $offsetRight
     $h = $this.Image.Height - $offsetTop - $offsetBottom
+    if ($w -le 0 -or $h -le 0) {
+      throw "ERROR: CustomImage.ClipWithOffset(): クリップサイズが0以下になります。 w=${w}, h=${h}"
+    }
     $rect = [System.Drawing.Rectangle]::new($offsetLeft, $offsetTop, $w, $h)
     $destImage = [System.Drawing.Bitmap]::new($w, $h)
     $g = [System.Drawing.Graphics]::FromImage($destImage)
     $g.DrawImage($this.Image, 0, 0, $rect, [System.Drawing.GraphicsUnit]::Pixel)
     $g.Dispose()
     $this.SetWorkImage($destImage)
-    Write-Verbose "クリップ：${w}, ${h}"
+    Write-Verbose "クリップ後サイズ：${w}, ${h}"
   }
 
   # フレーム描画
