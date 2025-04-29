@@ -114,6 +114,42 @@ $form.Controls.Add($buttonPanel)
 # $loadClipboardButton.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
 # $buttonPanel.Controls.Add($loadClipboardButton)
 
+# クリップボタン
+$clipLabel = New-Object System.Windows.Forms.Label
+$clipLabel.Text = "クリップ"
+$clipLabel.AutoSize = $true
+$clipLabel.TextAlign = [System.Drawing.ContentAlignment]::BottomLeft
+$buttonPanel.Controls.Add($clipLabel)
+
+# クリップ幅入力用テキストボックス
+$clipSizeTextBox = New-Object System.Windows.Forms.TextBox
+$clipSizeTextBox.Text = "10"  # デフォルト値
+$clipSizeTextBox.AutoSize = $true
+$buttonPanel.Controls.Add($clipSizeTextBox)
+
+$clipArr = @(
+  @("上", 0, 1, 0, 0),
+  @("下", 0, 0, 0, 1),
+  @("左", 1, 0, 0, 0),
+  @("右", 0, 0, 1, 0)
+)
+
+for ($i = 0; $i -lt $clipArr.Length; $i++) {
+  $label, $left, $top, $right, $bottom = $clipArr[$i]
+  $clipButton = New-Object System.Windows.Forms.Button
+  $clipButton.AutoSize = $true
+  $clipButton.Text = "$label"
+  $clipButton.Tag = $i
+  $clipButton.Add_Click({
+      $label, $left, $top, $right, $bottom = $clipArr[$this.Tag]
+      $size = [int]$clipSizeTextBox.Text
+      $ImageService.ClipWithOffset($left * $size, $top * $size, $right * $size, $bottom * $size)
+    })
+  # 親コントロールとの調整
+  $clipButton.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
+  $buttonPanel.Controls.Add($clipButton)
+}
+
 # リサイズボタン
 $resizeLabel = New-Object System.Windows.Forms.Label
 $resizeLabel.Text = "リサイズ"

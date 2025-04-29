@@ -11,7 +11,8 @@ class ImageService {
   ImageService($ImageBox, $SrcPath) {
     if ($SrcPath) {
       $this.CustomImage = New-Object CustomImage $SrcPath
-    } else {
+    }
+    else {
       $this.CustomImage = New-Object CustomImage
     }
     $this.ImageBox = $ImageBox
@@ -25,6 +26,12 @@ class ImageService {
 
   [void] ConvertToGrayByMatrix() {
     $this.CustomImage.ConvertToGrayByMatrix()
+    $this.ImageBox.Image = $this.CustomImage.Image
+  }
+
+  # ƒNƒŠƒbƒv
+  [void] ClipWithOffset($offsetLeft, $offsetTop, $offsetRight, $offsetBottom) {
+    $this.CustomImage.ClipWithOffset($offsetLeft, $offsetTop, $offsetRight, $offsetBottom)
     $this.ImageBox.Image = $this.CustomImage.Image
   }
 

@@ -104,6 +104,20 @@ class CustomImage {
     Write-Verbose "リサイズ：${w}, ${h}"
   }
 
+  # クリップ
+  [void] ClipWithOffset($offsetLeft, $offsetTop, $offsetRight, $offsetBottom) {
+    # TODO サイズがマイナスになる場合のエラー処理を追加
+    $w = $this.Image.Width - $offsetLeft - $offsetRight
+    $h = $this.Image.Height - $offsetTop - $offsetBottom
+    $rect = [System.Drawing.Rectangle]::new($offsetLeft, $offsetTop, $w, $h)
+    $destImage = [System.Drawing.Bitmap]::new($w, $h)
+    $g = [System.Drawing.Graphics]::FromImage($destImage)
+    $g.DrawImage($this.Image, 0, 0, $rect, [System.Drawing.GraphicsUnit]::Pixel)
+    $g.Dispose()
+    $this.SetWorkImage($destImage)
+    Write-Verbose "クリップ：${w}, ${h}"
+  }
+
   # フレーム描画
   [void] DrawFrame($color, $size) {
     $pen = New-Object System.Drawing.Pen($color, $size)
