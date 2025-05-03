@@ -8,6 +8,7 @@ CSVファイルの個人情報カラムをマスキングした新しいCSVファイルを出力します。
 参考
 [[総集編] Pythonで日本語の正規表現チェックをする #日本語入力 - Qiita](https://qiita.com/tikaranimaru/items/a2e85ae66bf75e16f74f)
 [文字コード | プログラミング技術](https://so-zou.jp/software/tech/programming/tech/character-code/)
+[Character Classes in .NET Regular Expressions - .NET | Microsoft Learn](https://learn.microsoft.com/en-us/dotnet/standard/base-types/character-classes-in-regular-expressions#supported-unicode-general-categories)
 Shift_JIS
 [JIS X 0208コード表 - CyberLibrarian](https://www.asahi-net.or.jp/~ax2s-kmtn/ref/jisx0208.html)
 [Microsoftコードページ932 - Wikipedia](https://ja.wikipedia.org/wiki/Microsoft%E3%82%B3%E3%83%BC%E3%83%89%E3%83%9A%E3%83%BC%E3%82%B8932)
@@ -22,8 +23,8 @@ Unicode
 出力CSVファイルのパス
 
 .EXAMPLE
-powershell -File .\mask_sjis.ps1 .\in.csv .\out.csv
-.\File\Masking\mask_sjis.ps1 .\File\Masking\sample_input_sjis.csv .\work\sample_masked_sjis.csv
+powershell -File .\mask_sjis2.ps1 .\in.csv .\out.csv
+.\File\Masking\mask_sjis2.ps1 .\File\Masking\sample_input_sjis.csv .\work\sample_masked_sjis2.csv
 #>
 
 param(
@@ -48,14 +49,15 @@ function Convert-MaskChar {
         # 半角数字
         # ASCIIコード：0x30-0x39
         # [ASCII - Wikipedia](https://ja.wikipedia.org/wiki/ASCII)
-        { $_ -match '[0-9]' } { return '9' }
 
         # 全角数字
         # SJISコード：0x824F-0x8258
         # Unicodeコード：0xFF10-0xFF19
         # [JIS X 0208コード表 - CyberLibrarian](https://www.asahi-net.or.jp/~ax2s-kmtn/ref/jisx0208.html)
         # [Unicode 半角・全角形 - CyberLibrarian](https://www.asahi-net.or.jp/~ax2s-kmtn/ref/unicode/uff00.html)
-        { $_ -match '[０-９]' } { return '９' }
+
+        # 半角/全角数字
+        { $_ -match '\d' } { return '9' }
 
         # ローマ数字
         # SJISコード：
@@ -70,7 +72,7 @@ function Convert-MaskChar {
         #   0x2150-0x218F（IsNumberForms）
         # [Windows-31J の重複符号化文字と Unicode](https://www2d.biglobe.ne.jp/~msyk/charcode/cp932/uni2sjis-Windows-31J.html)
         # [Unicode 数字に準じるもの - CyberLibrarian](https://www.asahi-net.or.jp/~ax2s-kmtn/ref/unicode/u2150.html)
-        { $_ -match '[Ⅰ-Ⅹⅰ-ⅹ]' } { return 'Ⅲ' }
+        { $_ -match '\p{IsNumberForms}' } { return 'Ⅲ' }
 
         # 半角英字
         # ASCIIコード：0x41-0x5A, 0x61-0x7A
@@ -100,7 +102,7 @@ function Convert-MaskChar {
         # Unicodeカテゴリ：0x30A0-0x30FF（IsKatakana）
         # [JIS X 0208コード表 - CyberLibrarian](https://www.asahi-net.or.jp/~ax2s-kmtn/ref/jisx0208.html)
         # [Unicode 片仮名 - CyberLibrarian](https://www.asahi-net.or.jp/~ax2s-kmtn/ref/unicode/u30a0.html)
-        { $_ -match '[ァ-ヶ]' } { return 'ア' }
+        { $_ -match '\p{IsKatakana}' } { return 'ア' }
 
         # 全角ひらがな
         # ぁあぃいぅうぇえぉおかがきぎくぐけげこごさざしじすずせぜそぞただちぢっつづてでとどなにぬねのはばぱひびぴふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろゎわゐゑをん
@@ -109,7 +111,7 @@ function Convert-MaskChar {
         # Unicodeカテゴリ：0x3040-0x309F（IsHiragana）
         # [JIS X 0208コード表 - CyberLibrarian](https://www.asahi-net.or.jp/~ax2s-kmtn/ref/jisx0208.html)
         # [Unicode 平仮名 - CyberLibrarian](https://www.asahi-net.or.jp/~ax2s-kmtn/ref/unicode/u3040.html)
-        { $_ -match '[ぁ-ん]' } { return 'あ' }
+        { $_ -match '\p{IsHiragana}' } { return 'あ' }
 
         # 漢字
         # SJISコード：0x889F-0xEAA4（亜-熙）、SJISは第1,2水準のみ。
@@ -117,10 +119,7 @@ function Convert-MaskChar {
         # Unicodeカテゴリ：0x4E00-0x9FFF（IsCJKUnifiedIdeographs）
         # [JIS X 0208コード表 - CyberLibrarian](https://www.asahi-net.or.jp/~ax2s-kmtn/ref/jisx0208.html)
         # [Unicode CJK統合漢字－全漢字一覧 - CyberLibrarian](https://www.asahi-net.or.jp/~ax2s-kmtn/ref/unicode/cjku_klist.html)
-        #{ $_ -match '[亜-熙]' } { return '亜' }
-        # →NG。変換されない漢字あり。Powershellでは内部的にUTF-16で処理しているから？
-        # Unicode CJK統合漢字 のうち、SJISで表現できそうな範囲で変換してみる。
-        { $_ -match '[一-龠]' } { return '亜' }
+        { $_ -match '\p{IsCJKUnifiedIdeographs}' } { return '亜' }
 
         # 空白・記号などはそのまま
         default { return $char }
