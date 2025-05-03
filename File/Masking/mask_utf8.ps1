@@ -38,7 +38,7 @@ if ($PSBoundParameters.Count -lt 2) {
 }
 
 # エンコーディングはUTF-8で固定
-$encoding = [System.Text.Encoding]::UTF8
+#$encoding = [System.Text.Encoding]::UTF8
 $importEncoding = "UTF8"
 $exportEncoding = "UTF8"
 

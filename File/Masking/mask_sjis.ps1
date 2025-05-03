@@ -37,7 +37,7 @@ if ($PSBoundParameters.Count -lt 2) {
 }
 
 # エンコーディングはShift_JIS（Default）で固定
-$encoding = [System.Text.Encoding]::GetEncoding("shift_jis")
+#$encoding = [System.Text.Encoding]::GetEncoding("shift_jis")
 $importEncoding = "Default"
 $exportEncoding = "Default"
 
