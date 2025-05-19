@@ -121,22 +121,53 @@ function Convert-Field {
     return $text
 }
 
-# CSV読込・マスキング・出力
+# 処理開始
 $startTime = Get-Date
 Write-Host "START $($startTime.ToString('yyyy/MM/dd HH:mm:ss'))"
 
-$csv = Import-Csv -Path $inputPath -Encoding $importEncoding
-foreach ($row in $csv) {
+# CSV読込・マスキング・出力
+# $csv = Import-Csv -Path $inputPath -Encoding $importEncoding
+# foreach ($row in $csv) {
+#     # 必要なカラム名に合わせて修正してください
+#     if ($row.PSObject.Properties["名前（漢字）"]) { $row.'名前（漢字）' = Convert-Field $row.'名前（漢字）' }
+#     if ($row.PSObject.Properties["名前（ふりがな）"]) { $row.'名前（ふりがな）' = Convert-Field $row.'名前（ふりがな）' }
+#     if ($row.PSObject.Properties["名前（英字）"]) { $row.'名前（英字）' = Convert-Field $row.'名前（英字）' }
+#     if ($row.PSObject.Properties["住所1（都道府県）"]) { $row.'住所1（都道府県）' = Convert-Field $row.'住所1（都道府県）' }
+#     if ($row.PSObject.Properties["住所2"]) { $row.'住所2' = Convert-Field $row.'住所2' }
+#     if ($row.PSObject.Properties["電話番号"]) { $row.'電話番号' = Convert-Field $row.'電話番号' }
+#     if ($row.PSObject.Properties["誕生日"]) { $row.'誕生日' = Convert-Field $row.'誕生日' }
+# }
+# $csv | Export-Csv -Path $outputPath -Encoding $exportEncoding -NoTypeInformation
+
+# CSVストリーム処理
+$reader = New-Object System.IO.StreamReader($inputPath, [System.Text.Encoding]::UTF8)
+$writer = New-Object System.IO.StreamWriter($outputPath, $false, [System.Text.Encoding]::UTF8)
+
+$header = $reader.ReadLine()
+$columns = $header -split ','
+# $writer.WriteLine($header)
+# →ダブルクォーテーション括りにならない
+$csvLine = ($columns | ForEach-Object { '"' + ($_ -replace '"', '""') + '"' }) -join ','
+$writer.WriteLine($csvLine)
+
+while (($line = $reader.ReadLine()) -ne $null) {
+    if ($line.Trim() -eq '') { continue }
+    $obj = $line | ConvertFrom-Csv -Header $columns
     # 必要なカラム名に合わせて修正してください
-    if ($row.PSObject.Properties["名前（漢字）"]) { $row.'名前（漢字）' = Convert-Field $row.'名前（漢字）' }
-    if ($row.PSObject.Properties["名前（ふりがな）"]) { $row.'名前（ふりがな）' = Convert-Field $row.'名前（ふりがな）' }
-    if ($row.PSObject.Properties["名前（英字）"]) { $row.'名前（英字）' = Convert-Field $row.'名前（英字）' }
-    if ($row.PSObject.Properties["住所1（都道府県）"]) { $row.'住所1（都道府県）' = Convert-Field $row.'住所1（都道府県）' }
-    if ($row.PSObject.Properties["住所2"]) { $row.'住所2' = Convert-Field $row.'住所2' }
-    if ($row.PSObject.Properties["電話番号"]) { $row.'電話番号' = Convert-Field $row.'電話番号' }
-    if ($row.PSObject.Properties["誕生日"]) { $row.'誕生日' = Convert-Field $row.'誕生日' }
+    if ($obj."名前（漢字）") { $obj.'名前（漢字）' = Convert-Field $obj.'名前（漢字）' }
+    if ($obj."名前（ふりがな）") { $obj.'名前（ふりがな）' = Convert-Field $obj.'名前（ふりがな）' }
+    if ($obj."名前（英字）") { $obj.'名前（英字）' = Convert-Field $obj.'名前（英字）' }
+    if ($obj."住所1（都道府県）") { $obj.'住所1（都道府県）' = Convert-Field $obj.'住所1（都道府県）' }
+    if ($obj."住所2") { $obj.'住所2' = Convert-Field $obj.'住所2' }
+    if ($obj."電話番号") { $obj.'電話番号' = Convert-Field $obj.'電話番号' }
+    if ($obj."誕生日") { $obj.'誕生日' = Convert-Field $obj.'誕生日' }
+    # $csvLine = $obj | ConvertTo-Csv -NoTypeInformation | Select-Object -Skip 1
+    # →基本的にダブルクォーテーション括りとなるが、最終カラムがブランクの場合、ダブルクォーテーションが付かない。
+    $csvLine = ($columns | ForEach-Object { '"' + ($obj.$_ -replace '"', '""') + '"' }) -join ','
+    $writer.WriteLine($csvLine)
 }
-$csv | Export-Csv -Path $outputPath -Encoding $exportEncoding -NoTypeInformation
+$reader.Close()
+$writer.Close()
 
 Write-Host "マスキング済みCSVを $outputPath に出力しました。"
 $endTime = Get-Date
