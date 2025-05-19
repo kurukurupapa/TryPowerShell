@@ -23,8 +23,9 @@ Unicode
 出力CSVファイルのパス
 
 .EXAMPLE
-powershell -File .\File\Masking\mask_utf8.ps1 in.csv out.csv
-.\File\Masking\mask_utf8.ps1 .\File\Masking\sample_input_utf8.csv .\work\sample_masked_utf8.csv
+powershell -File MaskUtf8.ps1 in.csv out.csv
+.\File\Masking\MaskUtf8.ps1 .\File\Masking\SampleInput\utf8_CRLF.csv .\File\Masking\SampleOutput\utf8_CRLF.csv
+.\File\Masking\MaskUtf8.ps1 .\File\Masking\SampleInput\utf8_CRLF_Quotation.csv .\File\Masking\SampleOutput\utf8_CRLF_Quotation.csv
 #>
 
 param(
@@ -140,34 +141,33 @@ Write-Host "START $($startTime.ToString('yyyy/MM/dd HH:mm:ss'))"
 # $csv | Export-Csv -Path $outputPath -Encoding $exportEncoding -NoTypeInformation
 
 # CSVストリーム処理
-$reader = New-Object System.IO.StreamReader($inputPath, [System.Text.Encoding]::UTF8)
-$writer = New-Object System.IO.StreamWriter($outputPath, $false, [System.Text.Encoding]::UTF8)
-
-$header = $reader.ReadLine()
-$columns = $header -split ','
-# $writer.WriteLine($header)
-# →ダブルクォーテーション括りにならない
-$csvLine = ($columns | ForEach-Object { '"' + ($_ -replace '"', '""') + '"' }) -join ','
-$writer.WriteLine($csvLine)
-
-while (($line = $reader.ReadLine()) -ne $null) {
-    if ($line.Trim() -eq '') { continue }
-    $obj = $line | ConvertFrom-Csv -Header $columns
-    # 必要なカラム名に合わせて修正してください
-    if ($obj."名前（漢字）") { $obj.'名前（漢字）' = Convert-Field $obj.'名前（漢字）' }
-    if ($obj."名前（ふりがな）") { $obj.'名前（ふりがな）' = Convert-Field $obj.'名前（ふりがな）' }
-    if ($obj."名前（英字）") { $obj.'名前（英字）' = Convert-Field $obj.'名前（英字）' }
-    if ($obj."住所1（都道府県）") { $obj.'住所1（都道府県）' = Convert-Field $obj.'住所1（都道府県）' }
-    if ($obj."住所2") { $obj.'住所2' = Convert-Field $obj.'住所2' }
-    if ($obj."電話番号") { $obj.'電話番号' = Convert-Field $obj.'電話番号' }
-    if ($obj."誕生日") { $obj.'誕生日' = Convert-Field $obj.'誕生日' }
-    # $csvLine = $obj | ConvertTo-Csv -NoTypeInformation | Select-Object -Skip 1
-    # →基本的にダブルクォーテーション括りとなるが、最終カラムがブランクの場合、ダブルクォーテーションが付かない。
-    $csvLine = ($columns | ForEach-Object { '"' + ($obj.$_ -replace '"', '""') + '"' }) -join ','
-    $writer.WriteLine($csvLine)
-}
-$reader.Close()
-$writer.Close()
+$first = $true
+Get-Content -Path $inputPath -Encoding UTF8 | ForEach-Object {
+    if ($first) {
+        $first = $false
+        $columns = $_ -split ','
+        $csvLine = ($columns | ForEach-Object { '"' + ($_ -replace '"', '""') + '"' }) -join ','
+        return $csvLine
+    }
+    else {
+        if ($_.Trim() -eq '') { return }
+        $obj = $_ | ConvertFrom-Csv -Header $columns
+        # 必要なカラム名に合わせて修正してください
+        if ($obj."名前（漢字）") { $obj.'名前（漢字）' = Convert-Field $obj.'名前（漢字）' }
+        if ($obj."名前（ふりがな）") { $obj.'名前（ふりがな）' = Convert-Field $obj.'名前（ふりがな）' }
+        if ($obj."名前（英字）") { $obj.'名前（英字）' = Convert-Field $obj.'名前（英字）' }
+        if ($obj."住所1（都道府県）") { $obj.'住所1（都道府県）' = Convert-Field $obj.'住所1（都道府県）' }
+        if ($obj."住所2") { $obj.'住所2' = Convert-Field $obj.'住所2' }
+        if ($obj."電話番号") { $obj.'電話番号' = Convert-Field $obj.'電話番号' }
+        if ($obj."誕生日") { $obj.'誕生日' = Convert-Field $obj.'誕生日' }
+        $csvLine = ($columns | ForEach-Object { '"' + ($obj.$_ -replace '"', '""') + '"' }) -join ','
+        return $csvLine
+    }
+} |
+# Set-Content -Path $outputPath -Encoding UTF8
+# →Powershell5.1だと、BOM付きUTF-8になってしまった。
+ForEach-Object { [Text.Encoding]::UTF8.GetBytes($_ + "`r`n") } |
+Set-Content -Path $outputPath -Encoding Byte
 
 Write-Host "マスキング済みCSVを $outputPath に出力しました。"
 $endTime = Get-Date
