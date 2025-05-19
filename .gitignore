@@ -2,7 +2,8 @@
 *.log
 
 bak/
-work/
+[tT]mp/
+[wW]ork/
 **/TestResult/*.*
 
 Doc/Blog/All*.md
