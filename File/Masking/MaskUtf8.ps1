@@ -18,21 +18,31 @@ Unicode
 [Unicode（東アジア） - CyberLibrarian](https://www.asahi-net.or.jp/~ax2s-kmtn/ref/unicode/e_asia.html)
 [Unicode Character Table - Full List of Unicode Symbols SYMBL](https://symbl.cc/en/unicode-table/)
 
-.PARAMETER inputPath
+.PARAMETER InputPath
 入力CSVファイルのパス
-.PARAMETER outputPath
+.PARAMETER OutputPath
 出力CSVファイルのパス
 
 .EXAMPLE
 powershell -File MaskUtf8.ps1 in.csv out.csv
 .\File\Masking\MaskUtf8.ps1 .\File\Masking\SampleInput\utf8_CRLF.csv .\File\Masking\SampleOutput\MaskUtf8_utf8_CRLF.csv
 .\File\Masking\MaskUtf8.ps1 .\File\Masking\SampleInput\utf8_CRLF_Quotation.csv .\File\Masking\SampleOutput\MaskUtf8_utf8_CRLF_Quotation.csv
+.\File\Masking\MaskUtf8.ps1 .\File\Masking\SampleInput\utf8_LF.csv .\File\Masking\SampleOutput\MaskUtf8_utf8_LF.csv -NewLine LF
 #>
 
 param(
-    [string]$inputPath,
-    [string]$outputPath
+    [string]$InputPath,
+    [string]$OutputPath,
+    [ValidateSet("CRLF", "LF")]
+    [string]$NewLine = "CRLF"
 )
+
+# 改行コードを設定
+switch ($NewLine) {
+    "CRLF" { $newLineCode = "`r`n" }
+    "LF"   { $newLineCode = "`n" }
+    default { $newLineCode = "`r`n" }
+}
 
 if ($PSBoundParameters.Count -lt 2) {
     Get-Help $MyInvocation.MyCommand.Path
@@ -127,7 +137,7 @@ $first = $true
 $count = 0
 $columnIndexes = @{}
 $columnNames = @('名前（漢字）', '名前（ふりがな）', '名前（英字）', '住所1（都道府県）', '住所2', '電話番号', '誕生日')
-Get-Content -Path $inputPath -Encoding UTF8 | ForEach-Object {
+Get-Content -Path $InputPath -Encoding UTF8 | ForEach-Object {
     if ($first) {
         $first = $false
         $columns = $_ -split ','
@@ -156,10 +166,10 @@ Get-Content -Path $inputPath -Encoding UTF8 | ForEach-Object {
         return $csvLine
     }
 } |
-ForEach-Object { [Text.Encoding]::UTF8.GetBytes($_ + "`r`n") } |
-Set-Content -Path $outputPath -Encoding Byte
+ForEach-Object { [Text.Encoding]::UTF8.GetBytes($_ + $newLineCode) } |
+Set-Content -Path $OutputPath -Encoding Byte
 
-Write-Host "マスキング済みCSVを $outputPath に出力しました。"
+Write-Host "マスキング済みCSVを $OutputPath に出力しました。"
 $endTime = Get-Date
 Write-Host "END $($endTime.ToString('yyyy/MM/dd HH:mm:ss'))"
 Write-Host "データ件数: $count"
