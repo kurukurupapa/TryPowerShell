@@ -5,7 +5,6 @@
 CSVファイルの個人情報カラムをマスキングした新しいCSVファイルを出力します。
 入出力CSVファイルをUTF-8で固定しています。
 当スクリプト自体は、UTF-8 with BOMです。
-カンマを含むカラムには対応していません。
 
 参考
 [[総集編] Pythonで日本語の正規表現チェックをする #日本語入力 - Qiita](https://qiita.com/tikaranimaru/items/a2e85ae66bf75e16f74f)
@@ -24,9 +23,9 @@ Unicode
 出力CSVファイルのパス
 
 .EXAMPLE
-powershell -File MaskUtf8.ps1 in.csv out.csv
-.\File\Masking\MaskUtf8.ps1 .\File\Masking\SampleInput\utf8_CRLF.csv .\File\Masking\SampleOutput\MaskUtf8_utf8_CRLF.csv
-.\File\Masking\MaskUtf8.ps1 .\File\Masking\SampleInput\utf8_CRLF_Quotation.csv .\File\Masking\SampleOutput\MaskUtf8_utf8_CRLF_Quotation.csv
+powershell -File MaskUtf8_ImportExportCsv.ps1 in.csv out.csv
+.\File\Masking\MaskUtf8_ImportExportCsv.ps1 .\File\Masking\SampleInput\utf8_CRLF.csv .\File\Masking\SampleOutput\MaskUtf8_ImportExportCsv_utf8_CRLF.csv
+.\File\Masking\MaskUtf8_ImportExportCsv.ps1 .\File\Masking\SampleInput\utf8_CRLF_Quotation.csv .\File\Masking\SampleOutput\MaskUtf8_ImportExportCsv_utf8_CRLF_Quotation.csv
 #>
 
 param(
@@ -38,6 +37,11 @@ if ($PSBoundParameters.Count -lt 2) {
     Get-Help $MyInvocation.MyCommand.Path
     exit 1
 }
+
+# エンコーディングはUTF-8で固定
+#$encoding = [System.Text.Encoding]::UTF8
+$importEncoding = "UTF8"
+$exportEncoding = "UTF8"
 
 # マスキング関数
 function Convert-Field {
@@ -122,42 +126,24 @@ function Convert-Field {
 $startTime = Get-Date
 Write-Host "START $($startTime.ToString('yyyy/MM/dd HH:mm:ss'))"
 
-# CSVストリーム処理
-$first = $true
+# CSV読込・マスキング・出力
 $count = 0
-$columnIndexes = @{}
-$columnNames = @('名前（漢字）', '名前（ふりがな）', '名前（英字）', '住所1（都道府県）', '住所2', '電話番号', '誕生日')
-Get-Content -Path $inputPath -Encoding UTF8 | ForEach-Object {
-    if ($first) {
-        $first = $false
-        $columns = $_ -split ','
-        # マスキング対象カラムのインデックス番号を保持
-        $columnIndexes = @()
-        for ($i = 0; $i -lt $columns.Count; $i++) {
-            $column = $columns[$i] -replace '^"(.*)"$', '$1'
-            if ($columnNames -contains $column) {
-                $columnIndexes += $i
-            }
-        }
-        # ヘッダー行をそのまま出力
-        return ($columns -join ',')
-    }
-    else {
-        $count++
-        $columns = $_ -split ','
-        # マスキング対象カラムのみ処理
-        for ($i = 0; $i -lt $columns.Count; $i++) {
-            if ($columnIndexes -contains $i) {
-                $columns[$i] = Convert-Field $columns[$i]
-            }
-        }
-        # CSV行を生成
-        $csvLine = $columns -join ','
-        return $csvLine
-    }
+Import-Csv -Path $inputPath -Encoding $importEncoding |
+ForEach-Object {
+    $count++
+    # 必要なカラム名に合わせて修正してください
+    if ($_.PSObject.Properties["名前（漢字）"]) { $_.'名前（漢字）' = Convert-Field $_.'名前（漢字）' }
+    if ($_.PSObject.Properties["名前（ふりがな）"]) { $_.'名前（ふりがな）' = Convert-Field $_.'名前（ふりがな）' }
+    if ($_.PSObject.Properties["名前（英字）"]) { $_.'名前（英字）' = Convert-Field $_.'名前（英字）' }
+    if ($_.PSObject.Properties["住所1（都道府県）"]) { $_.'住所1（都道府県）' = Convert-Field $_.'住所1（都道府県）' }
+    if ($_.PSObject.Properties["住所2"]) { $_.'住所2' = Convert-Field $_.'住所2' }
+    if ($_.PSObject.Properties["電話番号"]) { $_.'電話番号' = Convert-Field $_.'電話番号' }
+    if ($_.PSObject.Properties["誕生日"]) { $_.'誕生日' = Convert-Field $_.'誕生日' }
+    $_
 } |
-ForEach-Object { [Text.Encoding]::UTF8.GetBytes($_ + "`r`n") } |
-Set-Content -Path $outputPath -Encoding Byte
+Export-Csv -Path $outputPath -Encoding $exportEncoding -NoTypeInformation
+#→基本的にダブルクォーテーション括りになる。
+#　ただし、ブランクカラムではダブルクォーテーションが付かない。
 
 Write-Host "マスキング済みCSVを $outputPath に出力しました。"
 $endTime = Get-Date
