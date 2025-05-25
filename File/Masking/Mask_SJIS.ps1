@@ -23,7 +23,7 @@ Unicode
 
 .EXAMPLE
 powershell -File Mask_SJIS.ps1 in.csv out.csv
-.\File\Masking\Mask_SJIS.ps1 .\File\Masking\SampleInput\sjis.csv .\File\Masking\SampleOutput\Mask_SJIS_sjis.csv
+.\File\Masking\Mask_SJIS.ps1 .\File\Masking\SampleInput\sjis.csv .\File\Masking\SampleOutput_Mask_SJIS\sjis.csv
 #>
 
 param(

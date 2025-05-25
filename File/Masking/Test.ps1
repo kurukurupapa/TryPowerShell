@@ -2,30 +2,52 @@
 
 $baseDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $inDir = Join-Path $baseDir "SampleInput"
-$outDir = Join-Path $baseDir "SampleOutput"
 
 # Mask_UTF8.ps1
-# UTF-8, CRLF
-. $baseDir/Mask_UTF8.ps1 $inDir/utf8_CRLF.csv $outDir/Mask_UTF8_utf8_CRLF.csv
-# UTF-8, CRLF, Quotation
-. $baseDir/Mask_UTF8.ps1 $inDir/utf8_CRLF_Quotation.csv $outDir/Mask_UTF8_utf8_CRLF_Quotation.csv
-# UTF-8, LF
-. $baseDir/Mask_UTF8.ps1 $inDir/utf8_LF.csv $outDir/Mask_UTF8_utf8_LF.csv -NewLine LF
+$baseName = "Mask_UTF8"
+$scriptPath = Join-Path $baseDir "$baseName.ps1"
+$outDir = Join-Path $baseDir "SampleOutput_$baseName"
+. $scriptPath $inDir/utf8_CRLF.csv           $outDir/utf8_CRLF.csv
+. $scriptPath $inDir/utf8_CRLF_Quotation.csv $outDir/utf8_CRLF_Quotation.csv
+. $scriptPath $inDir/utf8_LF.csv             $outDir/utf8_LF.csv             -NewLine LF
+
+# Mask_UTF8_ImportExportCsv.ps1
+$baseName = "Mask_UTF8_ImportExportCsv"
+$scriptPath = Join-Path $baseDir "$baseName.ps1"
+$outDir = Join-Path $baseDir "SampleOutput_$baseName"
+. $scriptPath $inDir/utf8_CRLF.csv           $outDir/utf8_CRLF.csv
+. $scriptPath $inDir/utf8_CRLF_Quotation.csv $outDir/utf8_CRLF_Quotation.csv
+. $scriptPath $inDir/utf8_LF.csv             $outDir/utf8_LF.csv
 
 # Mask_UTF8_StdInOut.ps1
+$baseName = "Mask_UTF8_StdInOut"
+$scriptPath = Join-Path $baseDir "$baseName.ps1"
+$outDir = Join-Path $baseDir "SampleOutput_$baseName"
 # UTF-8, CRLF
-$inPath = ".\File\Masking\SampleInput\utf8_CRLF.csv"
-$outPath = ".\File\Masking\SampleOutput\Mask_UTF8_StdInOut_utf8_CRLF.csv"
-Get-Content -Encoding UTF8 $inPath | .\File\Masking\Mask_UTF8_StdInOut.ps1 | %{ [Text.Encoding]::UTF8.GetBytes($_+"`r`n") } | Set-Content -Encoding Byte $outPath
+$inPath = "$inDir/utf8_CRLF.csv"
+$outPath = "$outDir/utf8_CRLF.csv"
+Get-Content -Encoding UTF8 $inPath | . $scriptPath | %{ [Text.Encoding]::UTF8.GetBytes($_+"`r`n") } | Set-Content -Encoding Byte $outPath
 # UTF-8, CRLF, Quotation
-$inPath = ".\File\Masking\SampleInput\utf8_CRLF_Quotation.csv"
-$outPath = ".\File\Masking\SampleOutput\Mask_UTF8_StdInOut_utf8_CRLF_Quotation.csv"
-Get-Content -Encoding UTF8 $inPath | .\File\Masking\Mask_UTF8_StdInOut.ps1 | %{ [Text.Encoding]::UTF8.GetBytes($_+"`r`n") } | Set-Content -Encoding Byte $outPath
+$inPath = "$inDir/utf8_CRLF_Quotation.csv"
+$outPath = "$outDir/utf8_CRLF_Quotation.csv"
+Get-Content -Encoding UTF8 $inPath | . $scriptPath | %{ [Text.Encoding]::UTF8.GetBytes($_+"`r`n") } | Set-Content -Encoding Byte $outPath
 # UTF-8, LF
-$inPath = ".\File\Masking\SampleInput\utf8_LF.csv"
-$outPath = ".\File\Masking\SampleOutput\Mask_UTF8_StdInOut_utf8_LF.csv"
-Get-Content -Encoding UTF8 $inPath | .\File\Masking\Mask_UTF8_StdInOut.ps1 | %{ [Text.Encoding]::UTF8.GetBytes($_+"`n") } | Set-Content -Encoding Byte $outPath
+$inPath = "$inDir/utf8_LF.csv"
+$outPath = "$outDir/utf8_LF.csv"
+Get-Content -Encoding UTF8 $inPath | . $scriptPath | %{ [Text.Encoding]::UTF8.GetBytes($_+"`n") } | Set-Content -Encoding Byte $outPath
 # SJIS, CRLF
-$inPath = ".\File\Masking\SampleInput\sjis.csv"
-$outPath = ".\File\Masking\SampleOutput\Mask_UTF8_StdInOut_sjis.csv"
-Get-Content $inPath | .\File\Masking\Mask_UTF8_StdInOut.ps1 | Set-Content $outPath
+$inPath = "$inDir/sjis.csv"
+$outPath = "$outDir/sjis.csv"
+Get-Content $inPath | . $scriptPath | Set-Content $outPath
+
+# Mask_SJIS.ps1
+$baseName = "Mask_SJIS"
+$scriptPath = Join-Path $baseDir "$baseName.ps1"
+$outDir = Join-Path $baseDir "SampleOutput_$baseName"
+. $scriptPath $inDir/sjis.csv $outDir/sjis.csv
+
+# Mask_SJIS2.ps1
+$baseName = "Mask_SJIS2"
+$scriptPath = Join-Path $baseDir "$baseName.ps1"
+$outDir = Join-Path $baseDir "SampleOutput_$baseName"
+. $scriptPath $inDir/sjis.csv $outDir/sjis.csv

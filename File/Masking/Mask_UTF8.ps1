@@ -25,9 +25,7 @@ Unicode
 
 .EXAMPLE
 powershell -File Mask_UTF8.ps1 in.csv out.csv
-.\File\Masking\Mask_UTF8.ps1 .\File\Masking\SampleInput\utf8_CRLF.csv .\File\Masking\SampleOutput\Mask_UTF8_utf8_CRLF.csv
-.\File\Masking\Mask_UTF8.ps1 .\File\Masking\SampleInput\utf8_CRLF_Quotation.csv .\File\Masking\SampleOutput\Mask_UTF8_utf8_CRLF_Quotation.csv
-.\File\Masking\Mask_UTF8.ps1 .\File\Masking\SampleInput\utf8_LF.csv .\File\Masking\SampleOutput\Mask_UTF8_utf8_LF.csv -NewLine LF
+.\File\Masking\Mask_UTF8.ps1 .\File\Masking\SampleInput\utf8_CRLF.csv .\File\Masking\SampleOutput_Mask_UTF8\utf8_CRLF.csv
 #>
 
 param(
