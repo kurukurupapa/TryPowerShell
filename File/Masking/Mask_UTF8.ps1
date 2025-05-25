@@ -24,10 +24,10 @@ Unicode
 出力CSVファイルのパス
 
 .EXAMPLE
-powershell -File MaskUtf8.ps1 in.csv out.csv
-.\File\Masking\MaskUtf8.ps1 .\File\Masking\SampleInput\utf8_CRLF.csv .\File\Masking\SampleOutput\MaskUtf8_utf8_CRLF.csv
-.\File\Masking\MaskUtf8.ps1 .\File\Masking\SampleInput\utf8_CRLF_Quotation.csv .\File\Masking\SampleOutput\MaskUtf8_utf8_CRLF_Quotation.csv
-.\File\Masking\MaskUtf8.ps1 .\File\Masking\SampleInput\utf8_LF.csv .\File\Masking\SampleOutput\MaskUtf8_utf8_LF.csv -NewLine LF
+powershell -File Mask_UTF8.ps1 in.csv out.csv
+.\File\Masking\Mask_UTF8.ps1 .\File\Masking\SampleInput\utf8_CRLF.csv .\File\Masking\SampleOutput\Mask_UTF8_utf8_CRLF.csv
+.\File\Masking\Mask_UTF8.ps1 .\File\Masking\SampleInput\utf8_CRLF_Quotation.csv .\File\Masking\SampleOutput\Mask_UTF8_utf8_CRLF_Quotation.csv
+.\File\Masking\Mask_UTF8.ps1 .\File\Masking\SampleInput\utf8_LF.csv .\File\Masking\SampleOutput\Mask_UTF8_utf8_LF.csv -NewLine LF
 #>
 
 param(

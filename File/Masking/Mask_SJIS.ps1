@@ -22,8 +22,8 @@ Unicode
 出力CSVファイルのパス
 
 .EXAMPLE
-powershell -File MaskSjis.ps1 in.csv out.csv
-.\File\Masking\MaskSjis.ps1 .\File\Masking\SampleInput\sjis.csv .\File\Masking\SampleOutput\sjis.csv
+powershell -File Mask_SJIS.ps1 in.csv out.csv
+.\File\Masking\Mask_SJIS.ps1 .\File\Masking\SampleInput\sjis.csv .\File\Masking\SampleOutput\Mask_SJIS_sjis.csv
 #>
 
 param(
