@@ -17,19 +17,19 @@ Unicode
 [Unicode（東アジア） - CyberLibrarian](https://www.asahi-net.or.jp/~ax2s-kmtn/ref/unicode/e_asia.html)
 [Unicode Character Table - Full List of Unicode Symbols SYMBL](https://symbl.cc/en/unicode-table/)
 
-.PARAMETER inputPath
+.PARAMETER InputPath
 入力CSVファイルのパス
-.PARAMETER outputPath
+.PARAMETER OutputPath
 出力CSVファイルのパス
 
 .EXAMPLE
 powershell -File Mask_SJIS2.ps1 in.csv out.csv
-.\File\Masking\Mask_SJIS2.ps1 .\File\Masking\SampleInput\sjis.csv .\File\Masking\SampleOutput_Mask_SJIS2\sjis.csv
+.\File\Masking\Mask_SJIS2.ps1 .\File\Masking\SampleInput\sjis_CRLF.csv .\File\Masking\SampleOutput_Mask_SJIS2\sjis_CRLF.csv
 #>
 
 param(
-    [string]$inputPath,
-    [string]$outputPath
+    [string]$InputPath,
+    [string]$OutputPath
 )
 
 if ($PSBoundParameters.Count -lt 2) {
@@ -124,24 +124,45 @@ function Convert-Field {
     return $text
 }
 
-# CSV読込・マスキング・出力
+# 処理開始
 $startTime = Get-Date
 Write-Host "START $($startTime.ToString('yyyy/MM/dd HH:mm:ss'))"
 
-$csv = Import-Csv -Path $inputPath -Encoding $importEncoding
-foreach ($row in $csv) {
-    # 必要なカラム名に合わせて修正してください
-    if ($row.PSObject.Properties["名前（漢字）"]) { $row.'名前（漢字）' = Convert-Field $row.'名前（漢字）' }
-    if ($row.PSObject.Properties["名前（ふりがな）"]) { $row.'名前（ふりがな）' = Convert-Field $row.'名前（ふりがな）' }
-    if ($row.PSObject.Properties["名前（英字）"]) { $row.'名前（英字）' = Convert-Field $row.'名前（英字）' }
-    if ($row.PSObject.Properties["住所1（都道府県）"]) { $row.'住所1（都道府県）' = Convert-Field $row.'住所1（都道府県）' }
-    if ($row.PSObject.Properties["住所2"]) { $row.'住所2' = Convert-Field $row.'住所2' }
-    if ($row.PSObject.Properties["電話番号"]) { $row.'電話番号' = Convert-Field $row.'電話番号' }
-    if ($row.PSObject.Properties["誕生日"]) { $row.'誕生日' = Convert-Field $row.'誕生日' }
-}
-$csv | Export-Csv -Path $outputPath -Encoding $exportEncoding -NoTypeInformation
+# CSVストリーム処理
+$first = $true
+$count = 0
+$columnIndexes = @{}
+$columnNames = @('名前（漢字）', '名前（ふりがな）', '名前（英字）', '住所1（都道府県）', '住所2', '電話番号', '誕生日')
+Get-Content -Path $InputPath | ForEach-Object {
+    $columns = $_ -split ','
+    if ($first) {
+        $first = $false
+        # マスキング対象カラムのインデックス番号を保持
+        $columnIndexes = @()
+        for ($i = 0; $i -lt $columns.Count; $i++) {
+            $column = $columns[$i] -replace '^"(.*)"$', '$1'
+            if ($columnNames -contains $column) {
+                $columnIndexes += $i
+            }
+        }
+    }
+    else {
+        $count++
+        # マスキング対象カラムのみ処理
+        for ($i = 0; $i -lt $columns.Count; $i++) {
+            if ($columnIndexes -contains $i) {
+                $columns[$i] = Convert-Field $columns[$i]
+            }
+        }
+    }
+    # CSV行を生成
+    $csvLine = $columns -join ','
+    return $csvLine
+} |
+Set-Content -Path $OutputPath
 
-Write-Host "マスキング済みCSVを $outputPath に出力しました。"
+Write-Host "マスキング済みCSVを $OutputPath に出力しました。"
 $endTime = Get-Date
 Write-Host "END $($endTime.ToString('yyyy/MM/dd HH:mm:ss'))"
+Write-Host "データ件数: $count"
 Write-Host "処理時間: $(($endTime - $startTime).ToString())"

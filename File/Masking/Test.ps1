@@ -36,18 +36,18 @@ $inPath = "$inDir/utf8_LF.csv"
 $outPath = "$outDir/utf8_LF.csv"
 Get-Content -Encoding UTF8 $inPath | . $scriptPath | %{ [Text.Encoding]::UTF8.GetBytes($_+"`n") } | Set-Content -Encoding Byte $outPath
 # SJIS, CRLF
-$inPath = "$inDir/sjis.csv"
-$outPath = "$outDir/sjis.csv"
+$inPath = "$inDir/sjis_CRLF.csv"
+$outPath = "$outDir/sjis_CRLF.csv"
 Get-Content $inPath | . $scriptPath | Set-Content $outPath
 
 # Mask_SJIS.ps1
 $baseName = "Mask_SJIS"
 $scriptPath = Join-Path $baseDir "$baseName.ps1"
 $outDir = Join-Path $baseDir "SampleOutput_$baseName"
-. $scriptPath $inDir/sjis.csv $outDir/sjis.csv
+. $scriptPath $inDir/sjis_CRLF.csv $outDir/sjis_CRLF.csv
 
 # Mask_SJIS2.ps1
 $baseName = "Mask_SJIS2"
 $scriptPath = Join-Path $baseDir "$baseName.ps1"
 $outDir = Join-Path $baseDir "SampleOutput_$baseName"
-. $scriptPath $inDir/sjis.csv $outDir/sjis.csv
+. $scriptPath $inDir/sjis_CRLF.csv $outDir/sjis_CRLF.csv

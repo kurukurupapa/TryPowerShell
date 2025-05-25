@@ -136,9 +136,9 @@ $count = 0
 $columnIndexes = @{}
 $columnNames = @('名前（漢字）', '名前（ふりがな）', '名前（英字）', '住所1（都道府県）', '住所2', '電話番号', '誕生日')
 Get-Content -Path $InputPath -Encoding UTF8 | ForEach-Object {
+    $columns = $_ -split ','
     if ($first) {
         $first = $false
-        $columns = $_ -split ','
         # マスキング対象カラムのインデックス番号を保持
         $columnIndexes = @()
         for ($i = 0; $i -lt $columns.Count; $i++) {
@@ -147,22 +147,19 @@ Get-Content -Path $InputPath -Encoding UTF8 | ForEach-Object {
                 $columnIndexes += $i
             }
         }
-        # ヘッダー行をそのまま出力
-        return ($columns -join ',')
     }
     else {
         $count++
-        $columns = $_ -split ','
         # マスキング対象カラムのみ処理
         for ($i = 0; $i -lt $columns.Count; $i++) {
             if ($columnIndexes -contains $i) {
                 $columns[$i] = Convert-Field $columns[$i]
             }
         }
-        # CSV行を生成
-        $csvLine = $columns -join ','
-        return $csvLine
     }
+    # CSV行を生成
+    $csvLine = $columns -join ','
+    return $csvLine
 } |
 ForEach-Object { [Text.Encoding]::UTF8.GetBytes($_ + $newLineCode) } |
 Set-Content -Path $OutputPath -Encoding Byte
