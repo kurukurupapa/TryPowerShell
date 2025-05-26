@@ -137,8 +137,11 @@ $columnIndexes = @{}
 $columnNames = @('名前（漢字）', '名前（ふりがな）', '名前（英字）', '住所1（都道府県）', '住所2', '電話番号', '誕生日')
 $maskTime = New-TimeSpan -Seconds 0
 
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 $reader = [System.IO.StreamReader]::new($InputPath, [System.Text.Encoding]::UTF8)
-$writer = [System.IO.StreamWriter]::new($OutputPath, $false, [System.Text.Encoding]::UTF8)
+# $writer = [System.IO.StreamWriter]::new($OutputPath, $false, [System.Text.Encoding]::UTF8)
+# →BOM付きUTF8になる
+$writer = [System.IO.StreamWriter]::new($OutputPath, $false, $utf8NoBom)
 try {
     while ($null -ne ($line = $reader.ReadLine())) {
         $columns = $line -split ','
