@@ -36,11 +36,6 @@ if ($PSBoundParameters.Count -lt 2) {
     exit 1
 }
 
-# エンコーディングはShift_JIS（Default）で固定
-#$encoding = [System.Text.Encoding]::GetEncoding("shift_jis")
-$importEncoding = "Default"
-$exportEncoding = "Default"
-
 # マスキング関数
 function Convert-Field {
     param($text)
@@ -134,7 +129,7 @@ $first = $true
 $count = 0
 $columnIndexes = @{}
 $columnNames = @('名前（漢字）', '名前（ふりがな）', '名前（英字）', '住所1（都道府県）', '住所2', '電話番号', '誕生日')
-Get-Content -Path $InputPath | ForEach-Object {
+Get-Content $InputPath | ForEach-Object {
     $columns = $_ -split ','
     if ($first) {
         $first = $false
@@ -160,7 +155,7 @@ Get-Content -Path $InputPath | ForEach-Object {
     $csvLine = $columns -join ','
     return $csvLine
 } |
-Set-Content -Path $OutputPath
+Set-Content $OutputPath
 
 Write-Host "マスキング済みCSVを $OutputPath に出力しました。"
 $endTime = Get-Date
