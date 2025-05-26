@@ -24,8 +24,8 @@ Unicode
 出力CSVファイルのパス
 
 .EXAMPLE
-powershell -File Mask_UTF8.ps1 in.csv out.csv
-.\File\Masking\Mask_UTF8.ps1 .\File\Masking\SampleInput\utf8_CRLF.csv .\File\Masking\SampleOutput_Mask_UTF8\utf8_CRLF.csv
+powershell -File Mask_UTF8_GetSetContent.ps1 in.csv out.csv
+.\File\Masking\Mask_UTF8_GetSetContent.ps1 .\File\Masking\SampleInput\utf8_CRLF.csv .\File\Masking\tmp.csv
 #>
 
 param(
@@ -38,7 +38,7 @@ param(
 # 改行コードを設定
 switch ($NewLine) {
     "CRLF" { $newLineCode = "`r`n" }
-    "LF"   { $newLineCode = "`n" }
+    "LF" { $newLineCode = "`n" }
     default { $newLineCode = "`r`n" }
 }
 

@@ -22,7 +22,7 @@ function Create-SampleData {
     }
 }
 if (-not (Test-Path $inPath)) {
-    Create-SampleData $inPath 100 | Set-Content $inPath
+    Create-SampleData $inPath 10 | Set-Content $inPath
 }
 
 # Get-Content/Set-Contentの処理時間を計測
@@ -45,10 +45,18 @@ Write-Host "Get/Set-Content（UTF8オプションあり（BOM付きUTF8））処理時間: $(($en
 
 $startTime = Get-Date
 Get-Content $inPath |
-ForEach-Object { [Text.Encoding]::UTF8.GetBytes($_+"`r`n") } |
+ForEach-Object { [Text.Encoding]::UTF8.GetBytes($_ + "`r`n") } |
 Set-Content $outPath -Encoding Byte
 $endTime = Get-Date
 Write-Host "Get/Set-Content（UTF8変換（BOMなしUTF8））処理時間: $(($endTime - $startTime).ToString("hh\:mm\:ss\.fff"))"
+# →かなり遅い。
+
+# Import-Csv/Export-Csvの処理時間を計測
+$startTime = Get-Date
+Import-Csv $inPath | Export-Csv $outPath -NoTypeInformation
+$endTime = Get-Date
+Write-Host "Import/Export-Csv処理時間: $(($endTime - $startTime).ToString("hh\:mm\:ss\.fff"))"
+# →Get/Set-Contentと比較して、だいぶ遅い。
 
 # パイプラインでの処理時間を計測
 $startTime = Get-Date
@@ -85,6 +93,7 @@ finally {
 }
 $endTime = Get-Date
 Write-Host "StreamReader/StreamWriter処理時間: $(($endTime - $startTime).ToString("hh\:mm\:ss\.fff"))"
+# →Get/Set-Contentより高速
 
 # StreamReaderとStreamWriterの処理時間を計測（エンコードあり）
 $startTime = Get-Date
@@ -101,6 +110,7 @@ finally {
 }
 $endTime = Get-Date
 Write-Host "StreamReader/StreamWriter（UTF8）処理時間: $(($endTime - $startTime).ToString("hh\:mm\:ss\.fff"))"
+# →Get/Set-Contentより高速
 
 # サンプルファイル削除
 Remove-Item -Path $inPath
