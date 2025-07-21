@@ -1,0 +1,25 @@
+1c1
+< # === 比較元ファイル (file1.txt) ===
+---
+> # === 比較対象ファイル (file2.txt) ===
+12d11
+< Deleted_Single_Line_Data
+15,16d13
+< Deleted_Multi_Line_Data_1
+< Deleted_Multi_Line_Data_2
+18a16
+> Added_Single_Line_Data
+20a19,20
+> Added_Multi_Line_Data_1
+> Added_Multi_Line_Data_2
+23c23
+< Original_Line_To_Be_Changed
+---
+> Modified_Line_From_Original
+26,27c26,27
+< Original_Multi_Line_To_Be_Changed_A
+< Original_Multi_Line_To_Be_Changed_B
+\ ファイル末尾に改行がありません
+---
+> Modified_Multi_Line_From_Original_A
+> Modified_Multi_Line_From_Original_B

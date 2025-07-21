@@ -1,0 +1,14 @@
+< 1  # === 比較元ファイル (file1.txt) ===
+>  1 # === 比較対象ファイル (file2.txt) ===
+< 12  Deleted_Single_Line_Data
+< 15  Deleted_Multi_Line_Data_1
+< 16  Deleted_Multi_Line_Data_2
+>  16 Added_Single_Line_Data
+>  19 Added_Multi_Line_Data_1
+>  20 Added_Multi_Line_Data_2
+< 23  Original_Line_To_Be_Changed
+>  23 Modified_Line_From_Original
+< 26  Original_Multi_Line_To_Be_Changed_A
+< 27  Original_Multi_Line_To_Be_Changed_B
+>  26 Modified_Multi_Line_From_Original_A
+>  27 Modified_Multi_Line_From_Original_B

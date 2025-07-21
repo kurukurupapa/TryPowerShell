@@ -1,0 +1,4 @@
+[START] Transaction ID: 1003
+INFO: Processing user 'charlie'.
+INFO: Payment received.
+[END] Transaction ID: 1003

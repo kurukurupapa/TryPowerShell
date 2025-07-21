@@ -1,0 +1,34 @@
+> # === 比較元ファイル (file1.txt) ===
+> # === 比較対象ファイル (file2.txt) ===
+  
+  # --- 1. 一致するデータ (単一行) ---
+  Unchanged_Single_Line_Data
+  
+  # --- 2. 一致するデータ (複数行) ---
+  Unchanged_Multi_Line_Data_1
+  Unchanged_Multi_Line_Data_2
+  Unchanged_Multi_Line_Data_3
+  
+  # --- 3. 削除されるデータ (単一行) ---
+> Deleted_Single_Line_Data
+  
+  # --- 4. 削除されるデータ (複数行) ---
+> Deleted_Multi_Line_Data_1
+> Deleted_Multi_Line_Data_2
+  
+  # --- 5. 追加されるデータ (単一行) ---
+> Added_Single_Line_Data
+  
+  # --- 6. 追加されるデータ (複数行) ---
+> Added_Multi_Line_Data_1
+> Added_Multi_Line_Data_2
+  
+  # --- 7. 変更されるデータ (単一行) ---
+> Original_Line_To_Be_Changed
+> Modified_Line_From_Original
+  
+  # --- 8. 変更されるデータ (複数行) ---
+> Original_Multi_Line_To_Be_Changed_A
+> Original_Multi_Line_To_Be_Changed_B
+> Modified_Multi_Line_From_Original_A
+> Modified_Multi_Line_From_Original_B

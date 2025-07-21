@@ -1,0 +1,5 @@
+[START] Transaction ID: 1002
+INFO: Processing user 'bob'.
+INFO: Payment failed.
+ERROR: Credit card declined.
+[END] Transaction ID: 1002
