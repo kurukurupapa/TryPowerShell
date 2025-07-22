@@ -158,81 +158,89 @@ function Format-DiffOutput {
     # パフォーマンスと順序保証のため、比較結果を行番号をキーとするハッシュテーブルに変換します。
     # 各ファイル(基準ファイル含む)の比較結果を格納するための、ハッシュテーブルの配列を準備します。
     # $FileComparisonResultsの要素数は比較対象のファイル数と等しい。基準ファイル(ID=0)も必要なので+1します。
-    $fileMapArr = 1..($FileComparisonResults.Count + 1) | ForEach-Object { @{} }
+    $fileDataMaps = 1..($FileComparisonResults.Count + 1) | ForEach-Object { @{} }
 
     foreach ($comparisonResult in $FileComparisonResults) {
         foreach ($obj in $comparisonResult) {
             # $obj.SourceFile は 0 (基準) または 1, 2, ... (各ファイル) を示す。
             # 対応するSourceFile IDのハッシュテーブルに、LineNumberをキーとしてオブジェクトを格納する。
-            $fileMapArr[$obj.SourceFile][$obj.LineNumber] = $obj
+            $fileDataMaps[$obj.SourceFile][$obj.LineNumber] = $obj
         }
     }
 
-    # 行番号順に出力テキストを整形する
-    $fileCount = $fileMapArr.Count
+    # --- 行番号順に出力テキストを整形 ---
+    $fileCount = $fileDataMaps.Count
     $lineCounters = @(1) * $fileCount # 各ファイルの現在行を追跡する配列 (初期値は1)
-    # 一致/差異行ブロックのループ
+
+    # 一致行を基準に、全ファイルの行を同期させながらループ処理
     while ($true) {
-        # 終了判定
+        # 手順 1: 終了判定
+        # 基準オブジェクト(ID=0)と各比較対象ファイル(ID>0)について、が最後まで処理されたら、すべての処理が完了。
         $noneCount = 0
-        for ($i = 0; $i -lt $fileCount; $i++) {
-            if (-not $fileMapArr[$i][$lineCounters[$i]]) {
+        for ($fileIndex = 0; $fileIndex -lt $fileCount; $fileIndex++) {
+            if (-not $fileDataMaps[$fileIndex][$lineCounters[$fileIndex]]) {
                 $noneCount++
             }
-            Write-Verbose "終了判定 $i $($lineCounters[$i]) $noneCount"
+            # Write-Verbose "終了判定 $i $($lineCounters[$i]) $noneCount"
         }
         if ($noneCount -eq $fileCount) {
             break
         }
 
-        # 各入力ファイルのループ
-        # 各入力ファイルにおける現在行の差異ブロックを整形する
-        for ($i = 1; $i -lt $fileCount; $i++) {
-            while ($fileMapArr[$i].ContainsKey($lineCounters[$i])) {
-                $file2Diff = $fileMapArr[$i][$lineCounters[$i]]
-                Write-Verbose "SourceFile=$i Line=$($lineCounters[$i]) $($file2Diff.SourceFile) $($file2Diff.SideIndicator) $($file2Diff.Line)"
-                if ($file2Diff.SideIndicator -eq '=>') {
-                    # 各入力ファイルの差異データで、追加された行
+        # 手順 2: 差分行（追加された行）の処理
+        # 各比較対象ファイル（ID > 0）について、次の一致行に到達するまでの差分行（SideIndicatorが '=>'）をすべて出力する。
+        for ($fileIndex = 1; $fileIndex -lt $fileCount; $fileIndex++) {
+            # このループは、現在のファイル($fileIndex)の連続する差分行をすべて処理する。
+            # $fileDataMaps[$fileIndex] には '=>' の行しか含まれないはずであるが、
+            # バグを懸念して、予期しないデータに気付けるようにエラーログ出力を入れておく。
+            while ($fileDataMaps[$fileIndex].ContainsKey($lineCounters[$fileIndex])) {
+                $diffObject = $fileDataMaps[$fileIndex][$lineCounters[$fileIndex]]
+
+                if ($diffObject.SideIndicator -eq '=>') {
+                    # このファイルにのみ存在する「追加行」を出力
                     $prefix1 = ">$Separator"
-                    $prefix2 = if ($LineNumber.IsPresent) { "$($Separator * ($i - 1))$($lineCounters[$i])$($Separator * ($fileCount - $i - 1))$Separator" } else { "" }
-                    "$prefix1$prefix2$($file2Diff.Line)"
-                    Write-Verbose "差異：$prefix1$prefix2$($file2Diff.Line)"
+                    $prefix2 = if ($LineNumber.IsPresent) { "$($Separator * ($fileIndex - 1))$($lineCounters[$fileIndex])$($Separator * ($fileCount - $fileIndex - 1))$Separator" } else { "" }
+                    "$prefix1$prefix2$($diffObject.Line)"
                 }
                 else {
                     # 想定外のデータはエラーとして報告
-                    Write-Error "予期しないデータ: SourceFile=$i Line=$($lineCounters[$i]) $($file2Diff.SourceFile) $($file2Diff.SideIndicator) $($file2Diff.Line)"
+                    Write-Error "予期しないデータ: SourceFile=$fileIndex Line=$($lineCounters[$fileIndex]) $($diffObject | Out-String)"
                 }
-                $lineCounters[$i]++
+
+                # このファイルのカウンタのみ進める
+                $lineCounters[$fileIndex]++
             }
         }
 
-        # 基準となる一致行セットの処理を進める
-        $file1Diff = $fileMapArr[0][$lineCounters[0]]
-        Write-Verbose "SourceFile=0 Line=$($lineCounters[0]) $($file1Diff.SourceFile) $($file1Diff.SideIndicator) $($file1Diff.Line)"
-        if ($file1Diff) {
-            if ($file1Diff.SideIndicator -eq '==') {
-                # 一致した行
+        # 手順 3: 一致行の処理
+        # 基準オブジェクト（ID=0）から次の一致行を取得して処理する。
+        $commonLineObject = $fileDataMaps[0][$lineCounters[0]]
+        if ($commonLineObject) {
+            if ($commonLineObject.SideIndicator -eq '==') {
+                # すべてのファイルに共通する「一致行」
                 if ($IncludeMatch.IsPresent) {
                     $prefix1 = " $Separator"
                     $prefix2 = ""
                     if ($LineNumber.IsPresent) {
                         # 各入力ファイルの行番号を出力する
-                        # 基準オブジェクト(SourceFile=0)自体は出力対象外
-                        for ($i = 1; $i -lt $fileCount; $i++) {
-                            $prefix2 += "$($lineCounters[$i])$Separator"
+                        for ($fileIndex = 1; $fileIndex -lt $fileCount; $fileIndex++) {
+                            $prefix2 += "$($lineCounters[$fileIndex])$Separator"
                         }
                     }
-                    "$prefix1$prefix2$($file1Diff.Line)"
-                    Write-Verbose "一致：$prefix1$prefix2$($file1Diff.Line)"
+                    "$prefix1$prefix2$($commonLineObject.Line)"
                 }
             }
             else {
                 # 想定外のデータはエラーとして報告
                 # 基準オブジェクトは一致行のみのはずなので、"<="や"=>"は出現しない想定。
-                Write-Error "予期しないデータ: SourceFile=0 Line=$($lineCounters[0]) $($file1Diff.SourceFile) $($file1Diff.SideIndicator) $($file1Diff.Line)"
+                Write-Error "予期しないデータが基準オブジェクト内に見つかりました: $($commonLineObject | Out-String)"
             }
-            for ($i = 0; $i -lt $fileCount; $i++) {
-                $lineCounters[$i]++
+
+            # 手順 4: カウンタの同期
+            # 一致行の処理が完了したので、すべてのファイルのカウンタを1つ進める。
+            # これにより、各ファイルのポインタが次の一致行の直後に移動し、同期が保たれる。
+            for ($fileIndex = 0; $fileIndex -lt $fileCount; $fileIndex++) {
+                $lineCounters[$fileIndex]++
             }
         }
     }
@@ -259,27 +267,14 @@ function Write-OutputContent {
     }
 }
 
-function Format-DebugString {
-    param(
-        [object]$InputObject
-    )
-    process {
-        if ($null -eq $InputObject) {
-            return '$null'
-        }
-
-        # 配列やコレクションの場合
-        if ($InputObject -is [System.Collections.IEnumerable] -and $InputObject -isnot [string]) {
-            $typeName = $InputObject.GetType().FullName
-            $count = @($InputObject).Count
-            $content = ($InputObject | ForEach-Object { "'$_'" }) -join ', '
-            return "[$typeName](${count}件): $content"
-        }
-        return $InputObject.ToString()
-    }
-}
-
 try {
+    # ユーティリティ関数を読み込む
+    . "$PSScriptRoot\Debug.ps1"
+
+    # .NETのカレントディレクトリをPowerShellのカレントディレクトリに同期させる
+    # これにより、[System.IO.Path]::GetFullPath() が期待通りに動作する
+    [System.IO.Directory]::SetCurrentDirectory((Get-Location).Path)
+
     # 入力パスを解決（ワイルドカードとフォルダ展開）
     # -ErrorAction Stop を指定して、パスが見つからない場合にcatchブロックで処理できるようにする
     $resolvedFilePaths = (Get-ChildItem -Path $InputPath -File -ErrorAction Stop).FullName | Get-Unique
@@ -292,7 +287,7 @@ try {
     # すべての入力ファイルから一致行を抽出
     Write-Verbose "一致行を抽出中"
     $matchingLines = @(Find-MatchingLines -FilePaths $resolvedFilePaths -Encoding $Encoding)
-    Write-Verbose "matchingLines: $(Format-DebugString $matchingLines)"
+    # Write-Verbose "matchingLines: $(Format-DebugString $matchingLines)"
 
     # -MatchOnlyが指定されている場合は、一致行を出力して終了
     if ($MatchOnly.IsPresent) {
@@ -303,17 +298,19 @@ try {
     # 上記で抽出した一致行と、各入力ファイルを比較する
     Write-Verbose "各ファイルを比較中"
     $referenceObject = @(Get-ContentFromLines -MatchingLines $matchingLines -SourceFileId 0)
-    Write-Verbose "referenceObject: $(Format-DebugString $referenceObject)"
-    $i = 1
-    # 各ファイルの比較結果(オブジェクト配列)を格納する配列です。
-    $fileComparisonResults = @()
-    foreach ($resolvedFilePath in $resolvedFilePaths) {
-        $differenceObject = @(Get-ContentFromFile -Path $resolvedFilePath -Encoding $Encoding -SourceFileId $i)
+    # Write-Verbose "referenceObject: $(Format-DebugString $referenceObject)"
 
-        # Compare-FileObjectの結果（配列）を、カンマ演算子を使って配列の要素として追加する
-        $singleFileResult = Compare-FileObject -ReferenceObject $referenceObject -DifferenceObject $differenceObject
-        $fileComparisonResults += , ($singleFileResult)
-        $i++
+    # 各ファイルを比較し、その結果(オブジェクト配列)をまとめて $fileComparisonResults に格納します。
+    # ループ内で += を使うよりもパフォーマンスが向上します。
+    $fileComparisonResults = for ($i = 0; $i -lt $resolvedFilePaths.Count; $i++) {
+        $resolvedFilePath = $resolvedFilePaths[$i]
+        $sourceFileId = $i + 1
+        $differenceObject = @(Get-ContentFromFile -Path $resolvedFilePath -Encoding $Encoding -SourceFileId $sourceFileId)
+
+        # Compare-FileObjectの結果はオブジェクトのコレクションです。
+        # forループがこのコレクションを収集し、$fileComparisonResults が結果の配列の配列になるように、
+        # カンマ演算子を使って、各比較結果を個別の配列要素としてラップします。
+        , (Compare-FileObject -ReferenceObject $referenceObject -DifferenceObject $differenceObject)
     }
 
     # 結果を出力
