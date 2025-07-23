@@ -33,10 +33,6 @@ $bigPath = CreateDummyFile 100
 .\MatchText2.ps1 "SampleMatchText\file1.txt" "SampleMatchText\match2.txt"  # 入力ファイル1件
 .\MatchText2.ps1 ("xxx.txt", "xxx.txt") "SampleMatchText\match2.txt"       # 入力ファイルが存在しない
 
-.\DiffText.ps1 "Work\pattern_file1-3.txt" "Sample\file1.txt" "Work\diff_pattern_file1.txt" -Encoding Default -IncludeMatch -n
-.\DiffText.ps1 "Work\pattern_file1-3.txt" "Sample\file2.txt" "Work\diff_pattern_file2.txt" -Encoding Default -IncludeMatch -n
-.\DiffText.ps1 "Work\pattern_file1-3.txt" "Sample\file3.txt" "Work\diff_pattern_file3.txt" -Encoding Default -IncludeMatch -n
-
 # DiffText.ps1
 .\DiffText.ps1               "SampleDiffText\file1.txt" "SampleDiffText\file2.txt" "SampleDiffText\diff_file1-2.txt"
 .\DiffText.ps1               "SampleDiffText\file1.txt" "SampleDiffText\file1.txt" "SampleDiffText\diff_file1-1.txt"   # 差分なし
@@ -113,6 +109,11 @@ $begin = Get-Date; .\JoinText.ps1 -InputPath $bigPath -OutputPath "Work\join.txt
 .\ConvertTextEncoding.ps1 "SampleConvertTextEncoding\xxx.txt" "SampleConvertTextEncoding\convert_xxx.txt"
 # パフォーマンステスト
 $begin = Get-Date; .\ConvertTextEncoding.ps1 -InputEncoding "Default" -OutputEncoding "UTF8" $bigPath "Work\convert.txt"; PrintTime $begin (Get-Date)
+
+
+# .NETのカレントディレクトリを設定
+[System.IO.Directory]::SetCurrentDirectory($env:TEMP)
+
 
 # 参考
 # Linux diffコマンド

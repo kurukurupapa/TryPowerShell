@@ -76,8 +76,7 @@ param(
 
 function Find-MatchingLines {
     param(
-        [string[]]$FilePaths,
-        [string]$Encoding
+        [string[]]$FilePaths
     )
     # 最初のファイルを読み込む
     $firstPath = $FilePaths[0]
@@ -119,7 +118,6 @@ function Get-ContentFromLines {
 function Get-ContentFromFile {
     param(
         [string]$Path,
-        [string]$Encoding,
         [int]$SourceFileId
     )
     if (-not (Test-Path -Path $Path -PathType Leaf)) {
@@ -147,18 +145,42 @@ function Compare-FileObject {
     Compare-Object @compareParams
 }
 
-function Format-DiffOutput {
+function Format-OutputLine {
     param(
-        [object[]]$FileComparisonResults,
-        [switch]$IncludeMatch,
-        [switch]$LineNumber,
-        [string]$Separator
+        [psobject]$LineObject,
+        [string]$Indicator,
+        [int[]]$LineCounters,
+        [int]$FileCount,
+        [int]$CurrentFileIndex = -1 # 差分行の場合のみ指定
     )
 
-    # パフォーマンスと順序保証のため、比較結果を行番号をキーとするハッシュテーブルに変換します。
-    # 各ファイル(基準ファイル含む)の比較結果を格納するための、ハッシュテーブルの配列を準備します。
-    # $FileComparisonResultsの要素数は比較対象のファイル数と等しい。基準ファイル(ID=0)も必要なので+1します。
-    $fileDataMaps = 1..($FileComparisonResults.Count + 1) | ForEach-Object { @{} }
+    $lineNumberPart = ""
+    if ($LineNumber.IsPresent) {
+        if ($CurrentFileIndex -ge 1) {
+            # 差分行の行番号フォーマット: 指定されたファイルインデックスの位置に行番号を配置
+            # 例: >  2   text  (ファイル2の2行目)
+            $paddingBefore = $Separator * ($CurrentFileIndex - 1)
+            $currentLineNumber = $LineCounters[$CurrentFileIndex]
+            $paddingAfter = $Separator * ($FileCount - $CurrentFileIndex - 1)
+            $lineNumberPart = "$paddingBefore$currentLineNumber$paddingAfter$Separator"
+        }
+        else {
+            # 一致行の行番号フォーマット: 全ファイルの行番号を並べる
+            # 例:  1 1 text
+            $lineNumbers = for ($i = 1; $i -lt $FileCount; $i++) { $LineCounters[$i] }
+            $lineNumberPart = ($lineNumbers -join $Separator) + $Separator
+        }
+    }
+    "$Indicator$Separator$lineNumberPart$($LineObject.Line)"
+}
+
+function Format-DiffOutput {
+    param(
+        [object[]]$FileComparisonResults
+    )
+
+    # 各ファイルの比較結果を、ファイルIDと行番号で高速に参照できるよう、ハッシュテーブルの配列に再構成します。
+    $fileDataMaps = 0..$FileComparisonResults.Count | ForEach-Object { @{} }
 
     foreach ($comparisonResult in $FileComparisonResults) {
         foreach ($obj in $comparisonResult) {
@@ -198,9 +220,7 @@ function Format-DiffOutput {
 
                 if ($diffObject.SideIndicator -eq '=>') {
                     # このファイルにのみ存在する「追加行」を出力
-                    $prefix1 = ">$Separator"
-                    $prefix2 = if ($LineNumber.IsPresent) { "$($Separator * ($fileIndex - 1))$($lineCounters[$fileIndex])$($Separator * ($fileCount - $fileIndex - 1))$Separator" } else { "" }
-                    "$prefix1$prefix2$($diffObject.Line)"
+                    Format-OutputLine -LineObject $diffObject -Indicator '>' -LineCounters $lineCounters -FileCount $fileCount -CurrentFileIndex $fileIndex
                 }
                 else {
                     # 想定外のデータはエラーとして報告
@@ -219,15 +239,7 @@ function Format-DiffOutput {
             if ($commonLineObject.SideIndicator -eq '==') {
                 # すべてのファイルに共通する「一致行」
                 if ($IncludeMatch.IsPresent) {
-                    $prefix1 = " $Separator"
-                    $prefix2 = ""
-                    if ($LineNumber.IsPresent) {
-                        # 各入力ファイルの行番号を出力する
-                        for ($fileIndex = 1; $fileIndex -lt $fileCount; $fileIndex++) {
-                            $prefix2 += "$($lineCounters[$fileIndex])$Separator"
-                        }
-                    }
-                    "$prefix1$prefix2$($commonLineObject.Line)"
+                    Format-OutputLine -LineObject $commonLineObject -Indicator ' ' -LineCounters $lineCounters -FileCount $fileCount
                 }
             }
             else {
@@ -248,9 +260,7 @@ function Format-DiffOutput {
 
 function Write-OutputContent {
     param(
-        [object[]]$Content,
-        [string]$OutputPath,
-        [string]$Encoding
+        [object[]]$Content
     )
     if ([string]::IsNullOrEmpty($OutputPath)) {
         # 標準出力へ
@@ -265,6 +275,29 @@ function Write-OutputContent {
         [System.IO.File]::WriteAllLines($OutputPath, @($Content), $encodingObject)
         Write-Verbose "出力しました。$OutputPath"
     }
+}
+
+function Get-FileComparisonResults {
+    param(
+        [string[]]$FilePaths,
+        [string[]]$MatchingLines
+    )
+    Write-Verbose "各ファイルを比較中"
+    $referenceObject = @(Get-ContentFromLines -MatchingLines $MatchingLines -SourceFileId 0)
+    # Write-Verbose "referenceObject: $(Format-DebugString $referenceObject)"
+
+    # 各ファイルを比較し、その結果(オブジェクト配列)をまとめて $fileComparisonResults に格納します。
+    # ループ内で += を使うよりもパフォーマンスが向上します。
+    $fileComparisonResults = for ($i = 0; $i -lt $FilePaths.Count; $i++) {
+        $resolvedFilePath = $FilePaths[$i]
+        $sourceFileId = $i + 1
+        $differenceObject = @(Get-ContentFromFile -Path $resolvedFilePath -SourceFileId $sourceFileId)
+
+        # Compare-FileObjectの結果はオブジェクトのコレクションを返します。
+        # カンマ演算子を先頭に置くことで、各比較結果を配列の新しい要素として効率的に追加します。
+        , (Compare-FileObject -ReferenceObject $referenceObject -DifferenceObject $differenceObject)
+    }
+    return $fileComparisonResults
 }
 
 try {
@@ -286,38 +319,23 @@ try {
 
     # すべての入力ファイルから一致行を抽出
     Write-Verbose "一致行を抽出中"
-    $matchingLines = @(Find-MatchingLines -FilePaths $resolvedFilePaths -Encoding $Encoding)
+    $matchingLines = @(Find-MatchingLines -FilePaths $resolvedFilePaths)
     # Write-Verbose "matchingLines: $(Format-DebugString $matchingLines)"
 
     # -MatchOnlyが指定されている場合は、一致行を出力して終了
     if ($MatchOnly.IsPresent) {
-        Write-OutputContent -Content $matchingLines -OutputPath $OutputPath -Encoding $Encoding
+        Write-OutputContent -Content $matchingLines
         return
     }
 
-    # 上記で抽出した一致行と、各入力ファイルを比較する
-    Write-Verbose "各ファイルを比較中"
-    $referenceObject = @(Get-ContentFromLines -MatchingLines $matchingLines -SourceFileId 0)
-    # Write-Verbose "referenceObject: $(Format-DebugString $referenceObject)"
-
-    # 各ファイルを比較し、その結果(オブジェクト配列)をまとめて $fileComparisonResults に格納します。
-    # ループ内で += を使うよりもパフォーマンスが向上します。
-    $fileComparisonResults = for ($i = 0; $i -lt $resolvedFilePaths.Count; $i++) {
-        $resolvedFilePath = $resolvedFilePaths[$i]
-        $sourceFileId = $i + 1
-        $differenceObject = @(Get-ContentFromFile -Path $resolvedFilePath -Encoding $Encoding -SourceFileId $sourceFileId)
-
-        # Compare-FileObjectの結果はオブジェクトのコレクションです。
-        # forループがこのコレクションを収集し、$fileComparisonResults が結果の配列の配列になるように、
-        # カンマ演算子を使って、各比較結果を個別の配列要素としてラップします。
-        , (Compare-FileObject -ReferenceObject $referenceObject -DifferenceObject $differenceObject)
-    }
+    # 一致行と各ファイルを比較し、詳細な比較結果データを生成します。
+    $fileComparisonResults = Get-FileComparisonResults -FilePaths $resolvedFilePaths -MatchingLines $matchingLines
 
     # 結果を出力
     Write-Verbose "結果出力中"
-    $formattedDifferences = Format-DiffOutput -FileComparisonResults $fileComparisonResults -IncludeMatch:$IncludeMatch -LineNumber:$LineNumber -Separator $Separator
+    $formattedDifferences = Format-DiffOutput -FileComparisonResults $fileComparisonResults
     if (-not $formattedDifferences) { $formattedDifferences = @() }
-    Write-OutputContent -Content $formattedDifferences -OutputPath $OutputPath -Encoding $Encoding
+    Write-OutputContent -Content $formattedDifferences
 }
 catch {
     Write-Error "処理中にエラーが発生しました: $($_.Exception.Message)"

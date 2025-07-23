@@ -41,6 +41,10 @@ param(
     [string]$Encoding = 'Default'
 )
 try {
+    # .NETのカレントディレクトリをPowerShellのカレントディレクトリに同期させる
+    # これにより、[System.IO.Path]::GetFullPath() が期待通りに動作する
+    [System.IO.Directory]::SetCurrentDirectory((Get-Location).Path)
+
     # 比較元のファイルを読み込む
     if (-not (Test-Path -Path $Path1 -PathType Leaf)) {
         throw "ファイルが見つかりません: $Path1"

@@ -202,6 +202,10 @@ function Format-DiffOutput {
 }
 
 try {
+    # .NETのカレントディレクトリをPowerShellのカレントディレクトリに同期させる
+    # これにより、[System.IO.Path]::GetFullPath() が期待通りに動作する
+    [System.IO.Directory]::SetCurrentDirectory((Get-Location).Path)
+
     # ファイルを読み込む
     $referenceObject = @(Get-ContentWithLineNumber -Path $Path1 -Encoding $Encoding -SourceFileId 1)
     $differenceObject = @(Get-ContentWithLineNumber -Path $Path2 -Encoding $Encoding -SourceFileId 2)

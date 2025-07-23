@@ -84,6 +84,10 @@ function Write-SplitFile {
 }
 
 try {
+    # .NETのカレントディレクトリをPowerShellのカレントディレクトリに同期させる
+    # これにより、[System.IO.Path]::GetFullPath() が期待通りに動作する
+    [System.IO.Directory]::SetCurrentDirectory((Get-Location).Path)
+
     # 入力パスを絶対パスに変換して、曖昧さをなくす
     $absolutePath = Resolve-Path -Path $Path -ErrorAction Stop
 

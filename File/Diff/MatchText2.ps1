@@ -41,6 +41,10 @@ param(
     [string]$Encoding = 'Default'
 )
 try {
+    # .NETのカレントディレクトリをPowerShellのカレントディレクトリに同期させる
+    # これにより、[System.IO.Path]::GetFullPath() が期待通りに動作する
+    [System.IO.Directory]::SetCurrentDirectory((Get-Location).Path)
+
     # 入力パスを解決（ワイルドカードとフォルダ展開）
     Write-Verbose "入力パスを解決しています: $($InputPath -join ', ')"
     # -ErrorAction Stop を指定して、パスが見つからない場合にcatchブロックで処理できるようにする

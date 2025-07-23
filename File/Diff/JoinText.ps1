@@ -43,6 +43,10 @@ param(
     [string]$Encoding = 'Default'
 )
 
+# .NETのカレントディレクトリをPowerShellのカレントディレクトリに同期させる
+# これにより、[System.IO.Path]::GetFullPath() が期待通りに動作する
+[System.IO.Directory]::SetCurrentDirectory((Get-Location).Path)
+
 # Get-ChildItem を使って、ファイル、ワイルドカード、フォルダ指定を統一的に扱い、
 # 存在するファイルオブジェクトのリストを取得します。-File スイッチでファイルのみに限定します。
 $filesToProcess = Get-ChildItem -Path $InputPath -File -ErrorAction SilentlyContinue
