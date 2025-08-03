@@ -1,5 +1,9 @@
 {
     "editor.formatOnSave": true,
     "files.autoGuessEncoding": true,
-    "files.encoding": "shiftjis"
+    "files.encoding": "shiftjis",
+    "files.candidateGuessEncodings": [
+        "shiftjis",
+        "utf8"
+    ]
 }

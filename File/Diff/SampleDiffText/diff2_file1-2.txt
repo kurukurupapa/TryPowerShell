@@ -1,14 +1,14 @@
-> # === 比較元ファイル (file1.txt) ===
+< # === 比較元ファイル (file1.txt) ===
 > # === 比較対象ファイル (file2.txt) ===
-> Deleted_Single_Line_Data
-> Deleted_Multi_Line_Data_1
-> Deleted_Multi_Line_Data_2
+< Deleted_Single_Line_Data
+< Deleted_Multi_Line_Data_1
+< Deleted_Multi_Line_Data_2
 > Added_Single_Line_Data
 > Added_Multi_Line_Data_1
 > Added_Multi_Line_Data_2
-> Original_Line_To_Be_Changed
+< Original_Line_To_Be_Changed
 > Modified_Line_From_Original
-> Original_Multi_Line_To_Be_Changed_A
-> Original_Multi_Line_To_Be_Changed_B
+< Original_Multi_Line_To_Be_Changed_A
+< Original_Multi_Line_To_Be_Changed_B
 > Modified_Multi_Line_From_Original_A
 > Modified_Multi_Line_From_Original_B

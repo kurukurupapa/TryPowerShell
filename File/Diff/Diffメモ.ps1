@@ -1,6 +1,8 @@
 # メモ
 
 Set-Location File\Diff
+$VerbosePreference = 'Continue'
+$DebugPreference = 'Continue'
 function PrintTimeSpan($begin, $end) {
     $span = $end - $begin
     Write-Host $span.TotalSeconds
@@ -13,6 +15,7 @@ function CreateDummyFile($size) {
 }
 $bigPath = CreateDummyFile 100
 
+
 # MatchText.ps1
 .\MatchText.ps1 "SampleMatchText\file1.txt"         "SampleMatchText\file2.txt" "SampleMatchText\match_file1-2.txt"
 .\MatchText.ps1 "SampleMatchText\match_file1-2.txt" "SampleMatchText\file3.txt" "SampleMatchText\match_file1-3.txt"
@@ -21,6 +24,7 @@ $bigPath = CreateDummyFile 100
 .\MatchText.ps1 -Encoding "UTF8"    "Sample\file1_utf8_crlf.txt" "Sample\file1_utf8_crlf.txt" "SampleMatchText\match_encoding_utf8.txt"
 # データ不備テスト
 .\MatchText.ps1 "xxx.txt" "xxx.txt" "SampleMatchText\xxx.txt"
+
 
 # MatchText2.ps1
 .\MatchText2.ps1 ("SampleMatchText\file1.txt", "SampleMatchText\file2.txt", "SampleMatchText\file3.txt") "SampleMatchText\match2_file1-3.txt"
@@ -32,6 +36,7 @@ $bigPath = CreateDummyFile 100
 # データ不備テスト
 .\MatchText2.ps1 "SampleMatchText\file1.txt" "SampleMatchText\match2.txt"  # 入力ファイル1件
 .\MatchText2.ps1 ("xxx.txt", "xxx.txt") "SampleMatchText\match2.txt"       # 入力ファイルが存在しない
+
 
 # DiffText.ps1
 .\DiffText.ps1               "SampleDiffText\file1.txt" "SampleDiffText\file2.txt" "SampleDiffText\diff_file1-2.txt"
@@ -50,23 +55,47 @@ $bigPath = CreateDummyFile 100
 # データ不備テスト
 .\DiffText.ps1 "xxx.txt" "xxx.txt" "SampleDiffText\xxx.txt"
 
+
 # DiffText2.ps1
-.\DiffText2.ps1               ("SampleDiffText\file1.txt", "SampleDiffText\file2.txt")  "SampleDiffText\diff2_file1-2.txt"
-.\DiffText2.ps1               ("SampleDiffText\file1.txt", "SampleDiffText\file1b.txt") "SampleDiffText\diff2_file1-1.txt"   # 差分なし
-.\DiffText2.ps1               ("SampleDiffText\zero.txt" , "SampleDiffText\file1.txt")  "SampleDiffText\diff2_zero_add.txt"  # 入力ゼロバイト、追加差分のみ
-.\DiffText2.ps1               ("SampleDiffText\file1.txt" , "SampleDiffText\zero.txt")  "SampleDiffText\diff2_zero_del.txt"  # 入力ゼロバイト、削除差分のみ
-.\DiffText2.ps1 -IncludeMatch ("SampleDiffText\file1.txt", "SampleDiffText\file2.txt") "SampleDiffText\diff2_match_file1-2.txt"
-.\DiffText2.ps1 -MatchOnly    ("SampleDiffText\file1.txt", "SampleDiffText\file2.txt") "SampleDiffText\match2_file1-2.txt"
-.\DiffText2.ps1 -MatchOnly     "SampleDiffText\file*.txt"                              "SampleDiffText\match2_file1-3.txt"
-.\DiffText2.ps1 -n                                        ("SampleDiffText\file1.txt", "SampleDiffText\file2.txt") "SampleDiffText\diff2_linenumber_file1-2.txt"
+Set-Location File\Diff
+$VerbosePreference = 'Continue'
+$DebugPreference = 'Continue'
+.\DiffText2.ps1                  ("SampleDiffText\file1.txt", "SampleDiffText\file2.txt")  "SampleDiffText\diff2_file1-2.txt"
+.\DiffText2.ps1                   "SampleDiffText\file?.txt"                               "SampleDiffText\diff2_file1-3.txt"
+.\DiffText2.ps1 -IncludeMatch -n ("SampleDiffText\file1.txt", "SampleDiffText\file2.txt")  "SampleDiffText\diff2_match_n_file1-2.txt"
+.\DiffText2.ps1 -IncludeMatch -n  "SampleDiffText\file?.txt"                               "SampleDiffText\diff2_match_n_file1-3.txt"
+.\DiffText2.ps1 -IncludeMatch -n ("SampleDiffText\file1.txt", "SampleDiffText\file1b.txt") "SampleDiffText\diff2_match_n_file1-1.txt"   # 差分なし
+.\DiffText2.ps1 -IncludeMatch -n ("SampleDiffText\zero.txt" , "SampleDiffText\file1.txt")  "SampleDiffText\diff2_match_n_zero_add.txt"  # 入力ゼロバイト、追加差分のみ
+.\DiffText2.ps1 -IncludeMatch -n ("SampleDiffText\file1.txt", "SampleDiffText\zero.txt")   "SampleDiffText\diff2_match_n_zero_del.txt"  # 入力ゼロバイト、削除差分のみ
+.\DiffText2.ps1 -IncludeMatch    ("SampleDiffText\file1.txt", "SampleDiffText\file2.txt")  "SampleDiffText\diff2_match_file1-2.txt"
+.\DiffText2.ps1 -IncludeMatch     "SampleDiffText\file?.txt"                               "SampleDiffText\diff2_match_file1-3.txt"
+.\DiffText2.ps1 -MatchOnly       ("SampleDiffText\file1.txt", "SampleDiffText\file2.txt")  "SampleDiffText\match2_file1-2.txt"
+.\DiffText2.ps1 -MatchOnly        "SampleDiffText\file?.txt"                               "SampleDiffText\match2_file1-3.txt"
 .\DiffText2.ps1 -LineNumber                               ("SampleDiffText\file1.txt", "SampleDiffText\file2.txt") "SampleDiffText\diff2_linenumber_file1-2.txt"
-.\DiffText2.ps1 -LineNumber -IncludeMatch                 ("SampleDiffText\file1.txt", "SampleDiffText\file2.txt") "SampleDiffText\diff2_linenumber_match_file1-2.txt"
-.\DiffText2.ps1 -LineNumber -IncludeMatch -Separator "`t" ("SampleDiffText\file1.txt", "SampleDiffText\file2.txt") "SampleDiffText\diff2_linenumber_match_separator_file1-2.txt"
+.\DiffText2.ps1 -Separator "`t" -LineNumber -IncludeMatch ("SampleDiffText\file1.txt", "SampleDiffText\file2.txt") "SampleDiffText\diff2_separator_file1-2.txt"
 .\DiffText2.ps1 -Encoding "Default" ("Sample\file1_sjis_crlf.txt", "Sample\file2_sjis_crlf.txt") "SampleDiffText\diff2_encoding_sjis.txt"
 .\DiffText2.ps1 -Encoding "UTF8"    ("Sample\file1_utf8_crlf.txt", "Sample\file2_utf8_crlf.txt") "SampleDiffText\diff2_encoding_utf8.txt"
 # データ不備テスト
 .\DiffText2.ps1 "SampleDiffText\file1.txt" -OutputPath "SampleDiffText\diff2.txt"  # 入力ファイル1件
 .\DiffText2.ps1 ("xxx.txt", "xxx.txt") "SampleDiffText\diff2.txt"                  # 入力ファイルが存在しない
+
+# DiffText2Coreテスト
+# New-Fixture -Name DiffText2_Content
+# Invoke-Pester .\DiffText2_Content.Tests.ps1 -CodeCoverage .\DiffText2_Content.ps1
+# New-Fixture -Name DiffText2_Result
+# Invoke-Pester .\DiffText2_Result.Tests.ps1 -CodeCoverage .\DiffText2_Result.ps1
+# New-Fixture -Name DiffText2_ResultsFormatter
+# Invoke-Pester .\DiffText2_ResultsFormatter.Tests.ps1 -CodeCoverage .\DiffText2_ResultsFormatter.ps1
+Set-Location File\Diff
+$VerbosePreference = 'Continue'
+$DebugPreference = 'Continue'
+Invoke-Pester .\DiffText2Core.Tests.ps1 -CodeCoverage .\DiffText2Core.ps1
+Invoke-Pester .\DiffText2Core.Tests.ps1 -TestName "ComparisonLine"
+Invoke-Pester .\DiffText2Core.Tests.ps1 -TestName "FileComparer"
+Invoke-Pester .\DiffText2Core.Tests.ps1 -TestName "ComparisonResult"
+Invoke-Pester .\DiffText2Core.Tests.ps1 -TestName "ComparisonResultsFormatter"
+Invoke-Pester .\DiffText2Core.Tests.ps1 -TestName "Other"
+
 
 # SplitText.ps1
 .\SplitText.ps1 -LineCount 10 "SampleSplitText\page_line_30.txt"
@@ -81,6 +110,7 @@ $bigPath = CreateDummyFile 100
 # パフォーマンステスト
 $begin = Get-Date; .\SplitText.ps1 -SplitAfter  '\[(END|End|end)\]' -Path $bigPath; PrintTime $begin (Get-Date)
 
+
 # JoinText.ps1
 .\JoinText.ps1 -InputPath ("SampleJoinText\part1.txt", "SampleJoinText\part2.txt") -OutputPath "SampleJoinText\join_part1-2.txt"
 .\JoinText.ps1 -InputPath "SampleJoinText\part*.txt" -OutputPath "SampleJoinText\join_wildcard_part1-2.txt"
@@ -91,6 +121,7 @@ $begin = Get-Date; .\SplitText.ps1 -SplitAfter  '\[(END|End|end)\]' -Path $bigPa
 .\JoinText.ps1 -InputPath "SampleJoinText\*.xxx" -OutputPath "SampleJoinText\a.xxx"
 # パフォーマンステスト
 $begin = Get-Date; .\JoinText.ps1 -InputPath $bigPath -OutputPath "Work\join.txt"; PrintTime $begin (Get-Date)
+
 
 # ConvertTextEncoding.ps1
 .\ConvertTextEncoding.ps1 -InputEncoding "Default" -OutputEncoding "Default" "Sample\file1_sjis_crlf.txt" "SampleConvertTextEncoding\convert_file1_default_default_crlf.txt"
@@ -113,6 +144,10 @@ $begin = Get-Date; .\ConvertTextEncoding.ps1 -InputEncoding "Default" -OutputEnc
 
 # .NETのカレントディレクトリを設定
 [System.IO.Directory]::SetCurrentDirectory($env:TEMP)
+
+# Get-Module Pester -ListAvailable #=> Version 3.4.0
+# [Pester - The ubiquitous test and mock framework for PowerShell | Pester](https://pester.dev/)
+# [pester/Pester at 3.4.0](https://github.com/pester/Pester/tree/3.4.0)
 
 
 # 参考

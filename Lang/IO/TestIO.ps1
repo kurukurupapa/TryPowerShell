@@ -5,7 +5,7 @@ $inPath = ".\Lang\IO\sample.txt"
 $outPath = ".\Lang\IO\tmp.txt"
 
 # サンプルファイル作成
-function Create-SampleData {
+function New-SampleData {
     param (
         [string]$path,
         [int]$sizeMB = 1
@@ -22,7 +22,7 @@ function Create-SampleData {
     }
 }
 if (-not (Test-Path $inPath)) {
-    Create-SampleData $inPath 10 | Set-Content $inPath
+    New-SampleData $inPath 10 | Set-Content $inPath
 }
 
 # Get-Content/Set-Contentの処理時間を計測

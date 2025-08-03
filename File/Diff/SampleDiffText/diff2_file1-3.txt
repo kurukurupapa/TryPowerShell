@@ -1,0 +1,32 @@
+< # === 比較元ファイル (file1.txt) ===
+< # === 比較元ファイル (file1.txt) ===
+> # === 比較対象ファイル (file2.txt) ===
+> # === 比較対象ファイル (file3.txt) ===
+> # (file1, file2とは一部だけ一致)
+< Unchanged_Multi_Line_Data_2
+< Deleted_Single_Line_Data
+< Deleted_Single_Line_Data
+< Deleted_Multi_Line_Data_1
+< Deleted_Multi_Line_Data_1
+< Deleted_Multi_Line_Data_2
+< Deleted_Multi_Line_Data_2
+> Added_Single_Line_Data
+> Added_In_File3_Only
+> Added_Multi_Line_Data_1
+> Added_Multi_Line_Data_2
+> Added_In_File3_Multi_1
+> Added_In_File3_Multi_2
+< Original_Line_To_Be_Changed
+< Original_Line_To_Be_Changed
+> Modified_Line_From_Original
+> # (file2とは別の変更)
+> Modified_Line_Differently
+< Original_Multi_Line_To_Be_Changed_A
+< Original_Multi_Line_To_Be_Changed_A
+< Original_Multi_Line_To_Be_Changed_B
+< Original_Multi_Line_To_Be_Changed_B
+> Modified_Multi_Line_From_Original_A
+> Modified_Multi_Line_From_Original_B
+> # (file2とは別の変更)
+> Modified_Multi_Line_Differently_A
+> Modified_Multi_Line_Differently_B
